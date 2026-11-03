@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Matrix, Mesh, Scene, TransformNode, Vector3, DefaultRenderingPipeline, ParticleSystem } from '@babylonjs/core';
+import { Color3, Color4, Engine, Matrix, Mesh, Scene, TransformNode, Vector3, DefaultRenderingPipeline, ParticleSystem } from '../babylon';
 import { applyScaling, createEngine, createPipeline } from '../core/renderer';
 import { detectQuality, isTouchDevice, QualityLevel, saveQuality } from '../core/quality';
 import { World } from '../world/world';
@@ -123,6 +123,7 @@ export class Game {
   private hasLens = false;
   private lensCarry: Mesh | null = null;
   private debugFrame?: (n: number) => string;
+  private inputCooldown = 0;
 
   constructor(private canvas: HTMLCanvasElement, uiRoot: HTMLDivElement) {
     this.ui = new UI(uiRoot);
@@ -145,6 +146,7 @@ export class Game {
     this.world = new World(this.scene, this.quality);
     await this.world.build(step);
     this.cam = new CameraRig(this.scene, this.world.terrain);
+    this.cam.occlude = (ax, az, bx, bz) => this.world.col.cameraHit(ax, az, bx, bz);
     this.pipeline = createPipeline(this.scene, this.cam.cam, this.quality);
     this.fx = new FX(this.scene);
     this.input = new Input(this.canvas, document.getElementById('ui')!);
@@ -612,8 +614,16 @@ export class Game {
       d.y = 0;
       const len = d.length() || 1;
       d.scaleInPlace(1 / len);
-      const side = new Vector3(d.z, 0, -d.x);
-      const camPos = mid.add(side.scale(4.6 + len * 0.3)).add(new Vector3(0, 2.0, 0)).add(d.scale(-1.6));
+      let side = new Vector3(d.z, 0, -d.x);
+      const off = 4.6 + len * 0.3;
+      const col = this.world.col;
+      const tryPos = (sd: Vector3) => mid.add(sd.scale(off)).add(new Vector3(0, 2.0, 0)).add(d.scale(-1.6));
+      const h1 = col.cameraHit(mid.x, mid.z, tryPos(side).x, tryPos(side).z);
+      const h2 = col.cameraHit(mid.x, mid.z, tryPos(side.scale(-1)).x, tryPos(side.scale(-1)).z);
+      if (h2 > h1) side = side.scale(-1);
+      let camPos = tryPos(side);
+      const hit = Math.max(h1, h2);
+      if (hit < 1) camPos = Vector3.Lerp(mid.add(new Vector3(0, 2.0, 0)), camPos, Math.max(0.35, hit - 0.05));
       const g = this.world.terrain.sample(camPos.x, camPos.z) + 1.2;
       if (camPos.y < g) camPos.y = g;
       this.cam.setFixed(camPos, mid.add(new Vector3(0, 1.45, 0)));
@@ -629,6 +639,9 @@ export class Game {
         if (l.who === 'pip') this.pip.doEmote(Math.random() < 0.5 ? 'nod' : 'jump');
       },
     });
+    // keys used to advance the dialogue must not also trigger a jump / interaction
+    this.inputCooldown = 0.4;
+    this.input.reset();
     this.mode = prev === 'dialogue' ? 'play' : prev === 'cinematic' ? 'cinematic' : 'play';
     if (this.mode === 'play') this.cam.release(this.cam.yaw);
   }
@@ -676,6 +689,10 @@ export class Game {
     this.ui.showHud(false);
     this.ui.prompt(null, false);
     this.audio.setMood('puzzle');
+    if (p !== 'bridge') {
+      this.player.nodes.root.setEnabled(false);
+      this.pip.n.root.setEnabled(false);
+    }
     if (p === 'bridge') this.bridge.enter();
     if (p === 'gears') this.gears.enter();
     if (p === 'circuit') this.circuit.enter();
@@ -683,6 +700,8 @@ export class Game {
 
   private endPuzzle() {
     this.activePuzzle = null;
+    this.player.nodes.root.setEnabled(true);
+    this.pip.n.root.setEnabled(true);
     this.input.joystickEnabled = true;
     if (this.mode === 'puzzle') {
       this.mode = 'play';
@@ -732,6 +751,8 @@ export class Game {
 
   private async onGearsSolved() {
     this.activePuzzle = null;
+    this.player.nodes.root.setEnabled(true);
+    this.pip.n.root.setEnabled(true);
     this.input.joystickEnabled = true;
     this.mode = 'cinematic';
     this.hasLens = true;
@@ -743,7 +764,8 @@ export class Game {
     await this.ui.achievement('Gear Genius', 'You discovered that touching gears spin opposite ways!', 'gear');
     this.ui.showHud(true);
     this.mode = 'play';
-    this.cam.release(this.cam.yaw + Math.PI);
+    this.player.teleport(PROF_POS[0] - 2.6, PROF_POS[1] - 0.6, Math.PI / 2);
+    this.cam.snapFollow(this.player.pos.add(new Vector3(0, 1.4, 0)), Math.PI / 2);
     this.player.rig.play('celebrate', 2);
     await this.talk(GEARS_DONE, this.prof.pos);
     this.setStage(Stage.Turbine);
@@ -773,6 +795,8 @@ export class Game {
 
   private async onCircuitSolved() {
     this.activePuzzle = null;
+    this.player.nodes.root.setEnabled(true);
+    this.pip.n.root.setEnabled(true);
     this.input.joystickEnabled = true;
     this.mode = 'cinematic';
     this.audio.bigSuccess();
@@ -840,6 +864,7 @@ export class Game {
     this.ui.showSkip(null);
     await this.ui.fade(true);
     this.player.nodes.root.setEnabled(true);
+    this.pip.n.root.setEnabled(true);
     this.player.teleport(PLAYER_START.x, PLAYER_START.z, 0);
     this.pip.place(this.player.pos.add(new Vector3(-2, 3, 2)));
     this.world.env.setTod(0, true);
@@ -1078,6 +1103,11 @@ export class Game {
       const target = new Vector3(20, 6, 10);
       this.cam.cam.position.set(target.x + Math.sin(a) * 175, 62 + Math.sin(this.titleOrbit * 0.7) * 8, target.z - Math.cos(a) * 175);
       this.cam.cam.setTarget(target);
+    }
+    if (this.inputCooldown > 0) {
+      this.inputCooldown -= dt;
+      this.input.consumeInteract();
+      this.input.consumeJump();
     }
     // ---------------- player & companions
     const canMove = this.mode === 'play';
@@ -1434,6 +1464,22 @@ export class Game {
     },
     interact: () => this.input.pressInteract(),
     pos: () => ({ x: this.player.pos.x, y: this.player.pos.y, z: this.player.pos.z }),
+    screen: (v: Vector3) => {
+      const eng = this.engine;
+      const w = eng.getRenderWidth() * eng.getHardwareScalingLevel();
+      const h = eng.getRenderHeight() * eng.getHardwareScalingLevel();
+      const p = Vector3.Project(v, Matrix.Identity(), this.scene.getTransformMatrix(), this.cam.cam.viewport.toGlobal(w, h));
+      return { x: Math.round(p.x), y: Math.round(p.y) };
+    },
+    targets: () => {
+      const pr = (m: TransformNode) => this.debug.screen(m.getAbsolutePosition());
+      if (this.activePuzzle === 'bridge') return this.bridge.debugTargets(pr);
+      if (this.activePuzzle === 'gears') return this.gears.debugTargets(pr);
+      if (this.activePuzzle === 'circuit') return this.circuit.debugTargets(pr);
+      return null;
+    },
+    startPuzzle: (p: 'bridge' | 'gears' | 'circuit') => this.startPuzzle(p),
+    setStage: (s: number) => this.setStage(s),
     restore: (s: number) => {
       this.restoreStage(s);
       this.startPlay();

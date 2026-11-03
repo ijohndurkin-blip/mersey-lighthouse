@@ -93,7 +93,7 @@ export const PROF_POS: P2 = [-17.5, 19.5];
 export const PLAYER_START = { x: 10, z: -80, yaw: 0 };
 
 export const BUNDLES: { id: 'posts' | 'beams' | 'braces'; x: number; z: number; name: string }[] = [
-  { id: 'posts', x: -31, z: -52, name: 'Bridge Posts' },
+  { id: 'posts', x: -26.2, z: -49.5, name: 'Bridge Posts' },
   { id: 'beams', x: 41, z: -53.5, name: 'Long Beams' },
   { id: 'braces', x: 24, z: -16, name: 'Brace Kit' },
 ];

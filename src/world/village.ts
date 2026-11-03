@@ -1,4 +1,4 @@
-import { Color3, Matrix, Mesh, TransformNode, Vector3 } from '@babylonjs/core';
+import { Color3, Matrix, Mesh, TransformNode, Vector3 } from '../babylon';
 import { Batch, Shape, T, col, Col, PaintOpts } from './geo';
 import { WorldCtx } from './ctx';
 import { HOUSES, HouseDef, JETTY, QUAY, VILLAGE_SQUARE } from './layout';

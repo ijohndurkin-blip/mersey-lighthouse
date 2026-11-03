@@ -1,4 +1,4 @@
-import { Color3, Color4, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3, AbstractMesh } from '@babylonjs/core';
+import { Color3, Color4, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3, AbstractMesh } from '../babylon';
 import { Batch, Shape, T } from '../world/geo';
 import { BRIDGE } from '../world/layout';
 import { PuzzleHost, pickAt } from './types';
@@ -51,6 +51,7 @@ export class BridgePuzzle {
   private selMat: StandardMaterial;
   private built: Mesh[] = [];
   private deckGroup: TransformNode;
+  private shelf: Mesh;
   postTop: number;
   onSolved: (() => void) | null = null;
   onExit: (() => void) | null = null;
@@ -62,6 +63,17 @@ export class BridgePuzzle {
     this.root = new TransformNode('bridgeBuild', scene);
     this.tray = new TransformNode('bridgeTray', scene);
     this.deckGroup = new TransformNode('bridgeDeck', scene);
+    const shelf = MeshBuilder.CreatePlane('trayShelf', { width: 4.4, height: 1.25 }, scene);
+    const shelfMat = new StandardMaterial('trayShelfMat', scene);
+    shelfMat.disableLighting = true;
+    shelfMat.emissiveColor = new Color3(0.09, 0.2, 0.36);
+    shelfMat.alpha = 0.55;
+    shelf.material = shelfMat;
+    shelf.parent = this.tray;
+    shelf.position.set(0, -0.62, 0.35);
+    shelf.renderingGroupId = 1;
+    shelf.isPickable = false;
+    this.shelf = shelf;
     this.postTop = BRIDGE.deckY - 0.45;
     this.ghostMat = new StandardMaterial('bridgeGhost', scene);
     this.ghostMat.disableLighting = true;
@@ -231,7 +243,7 @@ export class BridgePuzzle {
     const { cam, ui } = this.host;
     const aspect = this.host.scene.getEngine().getAspectRatio(cam.cam);
     const back = aspect < 1 ? 1.5 / aspect : 1;
-    cam.setFixed(new Vector3(BRIDGE.x + 12.5 * back, BRIDGE.deckY + 2.2, BRIDGE.z + 0.8), new Vector3(BRIDGE.x, BRIDGE.deckY - 1.6, BRIDGE.z + 0.4));
+    cam.setFixed(new Vector3(BRIDGE.x + 10 * back, BRIDGE.deckY + 1.6, BRIDGE.z + 0.3), new Vector3(BRIDGE.x, BRIDGE.deckY - 1.9, BRIDGE.z + 0.3));
     this.panel = ui.puzzlePanel('Build the Bridge', () => this.exit(), () => this.hint());
     this.hintLevel = 0;
     this.wrongs = 0;
@@ -249,6 +261,7 @@ export class BridgePuzzle {
     this.panel?.close();
     this.panel = null;
     for (const p of this.pieces) if (!p.used) p.mesh.setEnabled(false);
+    this.shelf.setEnabled(false);
     for (const s of this.slots) {
       s.ghost.setEnabled(false);
       s.proxy.setEnabled(false);
@@ -266,6 +279,7 @@ export class BridgePuzzle {
       s.proxy.setEnabled(on);
     }
     for (const p of this.pieces) if (!p.used) p.mesh.setEnabled(this.active);
+    this.shelf.setEnabled(this.active && this.step < 3);
     const texts = [
       'Each gap needs a post that reaches <b>exactly</b> up to the glowing line. Tap a post, then tap a gap!',
       'The long beams must reach from <b>one bank to the other</b>. Tap a beam, then tap a glowing beam spot.',
@@ -307,6 +321,7 @@ export class BridgePuzzle {
     const startPos = p.mesh.getAbsolutePosition().clone();
     p.mesh.setParent(null);
     p.mesh.renderingGroupId = 0;
+    p.mesh.renderOutline = false;
     const startScale = p.mesh.scaling.x;
     let target: Vector3;
     let targetRot: Vector3;
@@ -479,6 +494,7 @@ export class BridgePuzzle {
     this.active = false;
     this.panel?.close();
     this.panel = null;
+    this.shelf.setEnabled(false);
     for (const s of this.slots) {
       s.ghost.setEnabled(false);
       s.proxy.setEnabled(false);
@@ -572,6 +588,15 @@ export class BridgePuzzle {
     this.layDeck(false);
   }
 
+  debugTargets(pr: (m: TransformNode) => { x: number; y: number }) {
+    return {
+      pieces: this.pieces.filter((p) => !p.used && p.mesh.isEnabled()).map((p) => ({ id: p.id, kind: p.kind, value: p.value, ...pr(p.proxy) })),
+      slots: this.slots.map((s, i) => ({ i, kind: s.kind, need: s.need, filled: s.filled, on: s.proxy.isEnabled(), ...pr(s.ghost) })),
+      step: this.step,
+      busy: this.busy,
+    };
+  }
+
   hint() {
     this.hintLevel++;
     const lv = this.hintLevel;
@@ -605,6 +630,7 @@ export class BridgePuzzle {
       }
     }
     if (!this.active) return;
+    this.trayLayout();
     // ghost pulse
     this.ghostMat.alpha = 0.3 + Math.sin(this.time * 4) * 0.15;
     // tray idle motion + selection lift

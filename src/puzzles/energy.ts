@@ -1,4 +1,4 @@
-import { Color3, Color4, DynamicTexture, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3, AbstractMesh } from '@babylonjs/core';
+import { Color3, Color4, DynamicTexture, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3, AbstractMesh } from '../babylon';
 import { Batch, Shape, T } from '../world/geo';
 import { PuzzleHost, pickAt } from './types';
 import { TurbineHandles } from '../world/landmarks';
@@ -417,6 +417,15 @@ export class CircuitPuzzle {
     this.applyRotations(true);
     this.compute();
     this.solved = true;
+  }
+
+  debugTargets(pr: (m: TransformNode) => { x: number; y: number }) {
+    return {
+      tiles: this.tiles.map((t, i) => ({ i, c: t.c, r: t.r, type: t.type, rot: t.rot, ...pr(t.node) })),
+      wind: this.windReach,
+      solar: this.solarReach,
+      pct: this.lastPct,
+    };
   }
 
   hint() {

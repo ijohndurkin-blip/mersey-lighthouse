@@ -1,9 +1,9 @@
-import { Color3, Matrix, Mesh, Quaternion, StandardMaterial, Vector3, VertexData } from '@babylonjs/core';
+import { Color3, Matrix, Mesh, Quaternion, StandardMaterial, Vector3, VertexData } from '../babylon';
 import { Batch, Shape, T, col } from './geo';
 import { WorldCtx } from './ctx';
 import { WindPlugin } from './materials';
 import { fbm, rng, valueNoise, smoothstep, clamp, distToPolyline } from '../core/noise';
-import { HOUSES, TREE_AVOID, STREAM, BUNDLES, PATHS } from './layout';
+import { HOUSES, TREE_AVOID, STREAM, BUNDLES, PATHS, WORKSHOP, COTTAGE, LIGHTHOUSE } from './layout';
 import { QualitySettings } from '../core/quality';
 
 const LEAF_PALETTES: [string, string][] = [
@@ -220,6 +220,7 @@ export function scatterGroundCover(ctx: WorldCtx) {
     const cl = fbm(x * 0.08, z * 0.08, 2);
     if (rnd() > smoothstep(0.3, 0.6, cl) + 0.15) continue;
     if (insideHouse(x, z)) continue;
+    if (Math.hypot(x - WORKSHOP.x, z - WORKSHOP.z) < 8.5 || Math.hypot(x - COTTAGE.x, z - COTTAGE.z) < 5.5 || Math.hypot(x - LIGHTHOUSE.x, z - LIGHTHOUSE.z) < 6.5) continue;
     const s = 0.7 + rnd() * 0.8;
     const yaw = rnd() * 6.28;
     Matrix.ComposeToRef(new Vector3(s, s * (0.8 + rnd() * 0.5), s), Quaternion.RotationYawPitchRoll(yaw, 0, 0), new Vector3(x, h - 0.03, z), m);

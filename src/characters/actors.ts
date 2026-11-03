@@ -1,4 +1,4 @@
-import { Mesh, Scene, ShadowGenerator, TransformNode, Vector3 } from '@babylonjs/core';
+import { Mesh, Scene, ShadowGenerator, TransformNode, Vector3 } from '../babylon';
 import { Rig, RigNodes } from './rig';
 import { PipNodes } from './cast';
 import { Collision } from '../world/collision';

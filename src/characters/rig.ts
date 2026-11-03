@@ -1,4 +1,4 @@
-import { Mesh, Scene, TransformNode, Vector3 } from '@babylonjs/core';
+import { Mesh, Scene, TransformNode, Vector3 } from '../babylon';
 import { damp } from '../core/noise';
 
 export type Action = 'none' | 'wave' | 'celebrate' | 'interact' | 'talk' | 'think' | 'point' | 'cheer' | 'carry';

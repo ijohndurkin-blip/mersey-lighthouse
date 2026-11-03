@@ -1,4 +1,4 @@
-import { Color3, Color4, DynamicTexture, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3, AbstractMesh } from '@babylonjs/core';
+import { Color3, Color4, DynamicTexture, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3, AbstractMesh } from '../babylon';
 import { Batch, Shape, T, gearVD } from '../world/geo';
 import { PuzzleHost, pickAt } from './types';
 import { easeInOut, easeOutBack } from '../core/noise';
@@ -85,6 +85,8 @@ export class GearPuzzle {
   private arrowGood!: Mesh;
   private arrowDrive!: Mesh;
   private redMat: StandardMaterial;
+  private boardMat!: StandardMaterial;
+  private gearMat!: StandardMaterial;
   onSolved: (() => void) | null = null;
   onExit: (() => void) | null = null;
   private finishing = false;
@@ -97,7 +99,7 @@ export class GearPuzzle {
     this.redMat = new StandardMaterial('gearRed', scene);
     this.redMat.diffuseColor = new Color3(1, 0.4, 0.35);
     this.redMat.emissiveColor = new Color3(0.4, 0.05, 0.05);
-    const y0 = -0.35;
+    const y0 = -0.52;
     // local +x is on the viewer's LEFT (the board faces +z), and the water wheel is on that side
     const D = new Vector3(1.53, y0, 0);
     const X = new Vector3(0, y0, 0);
@@ -117,8 +119,20 @@ export class GearPuzzle {
     const B2 = mid.subtract(perp.scale(hh));
     const B = B1.y > B2.y ? B1 : B2;
 
-    // board decorations: title plate & bolts
+    // bright, evenly lit materials so the puzzle reads clearly inside the workshop
+    this.boardMat = new StandardMaterial('gearBoardMat', scene);
+    this.boardMat.diffuseColor = new Color3(0.85, 0.85, 0.85);
+    this.boardMat.specularColor = new Color3(0.05, 0.05, 0.05);
+    this.boardMat.emissiveColor = new Color3(0.42, 0.4, 0.37);
+    this.gearMat = new StandardMaterial('gearMat', scene);
+    this.gearMat.diffuseColor = new Color3(0.85, 0.85, 0.85);
+    this.gearMat.specularColor = new Color3(0.6, 0.55, 0.4);
+    this.gearMat.specularPower = 40;
+    this.gearMat.emissiveColor = new Color3(0.36, 0.34, 0.3);
+    // board decorations: backing, bolts, shelf
     const bb = new Batch();
+    bb.add(Shape.rbox(8.6, 5.0, 0.3, 0.15, 2), T(0, -0.05, -0.17), '#7a5638', { ao: 0.2 });
+    bb.add(Shape.rbox(8.2, 4.6, 0.12, 0.1, 1), T(0, -0.05, -0.05), '#e8d4aa');
     for (const [x, y] of [
       [-3.7, 1.9],
       [3.7, 1.9],
@@ -141,7 +155,7 @@ export class GearPuzzle {
       const dy = 2.05 - O.y;
       bb.add(Shape.cyl(Math.hypot(dx, dy), 0.04, 0.04, 4), T((O.x - 3.0) / 2, (O.y + 2.05) / 2, 0.75, 0, 0, -Math.atan2(dx, dy)), '#d8c49a');
     }
-    bb.build('gearBoardDeco', scene, world.mats.vc, this.root);
+    bb.build('gearBoardDeco', scene, this.boardMat, this.root);
     // vault door + lens
     this.vaultDoor = new TransformNode('vaultDoor', scene);
     this.vaultDoor.parent = this.root;
@@ -150,7 +164,7 @@ export class GearPuzzle {
     vd.add(Shape.rbox(1.25, 1.25, 0.1, 0.06, 1), T(0, 0, 0), '#7f93a8');
     vd.add(Shape.torus(0.6, 0.06, 16), T(0, 0, 0.06, Math.PI / 2, 0, 0), '#e7b84a');
     vd.add(Shape.sphere(0.16, 8), T(0, 0, 0.08), '#e7b84a');
-    vd.build('vaultDoorMesh', scene, world.mats.vc, this.vaultDoor);
+    vd.build('vaultDoorMesh', scene, this.boardMat, this.vaultDoor);
     const lb = new Batch();
     lb.add(Shape.ico(0.32, 1), T(0, 0, 0, 0, 0, 0, 1, 1.3, 1), '#fff6c8', { flat: true });
     lb.add(Shape.torus(0.72, 0.06, 16), T(0, 0, 0), '#e7b84a');
@@ -228,7 +242,7 @@ export class GearPuzzle {
       const a = (k / 5) * Math.PI * 2;
       b.add(Shape.sphere(r * 0.36, 8), T(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, 0.06, 0, 0, 0, 1, 1, 0.35), Color3.FromHexString(color).scale(0.7));
     }
-    const mesh = b.build('gearMesh', scene, world.mats.metal, node);
+    const mesh = b.build('gearMesh', scene, this.gearMat, node);
     mesh.isPickable = false;
     const proxy = MeshBuilder.CreateCylinder('gearProxy', { height: 0.5, diameter: r * 2.3, tessellation: 12 }, scene);
     proxy.rotation.x = Math.PI / 2;
@@ -247,9 +261,9 @@ export class GearPuzzle {
     const { cam, ui } = this.host;
     const wm = this.root.getWorldMatrix();
     const aspect = this.host.scene.getEngine().getAspectRatio(cam.cam);
-    const dist = aspect < 1.2 ? 6.4 / Math.max(0.5, aspect) : 6.0;
-    const p = Vector3.TransformCoordinates(new Vector3(-0.3, 0.1, dist), wm);
-    const l = Vector3.TransformCoordinates(new Vector3(-0.3, -0.05, 0), wm);
+    const dist = aspect < 1.2 ? 7.0 / Math.max(0.5, aspect) : 6.7;
+    const p = Vector3.TransformCoordinates(new Vector3(-0.3, 0.35, dist), wm);
+    const l = Vector3.TransformCoordinates(new Vector3(-0.3, 0.2, 0), wm);
     cam.setFixed(p, l);
     this.panel = ui.puzzlePanel('Fix the Gear Machine', () => this.exit(), () => this.hint());
     this.panel.set('Connect the <b>water wheel gear</b> (left) to the <b>vault gear</b> (right). The vault gear must spin the way the <b style="color:#26a85a">green arrow</b> shows!');
@@ -375,6 +389,15 @@ export class GearPuzzle {
     }
     // little gear-meshing sound
     if (visited.size > 1) this.host.audio.gearClick();
+  }
+
+  debugTargets(pr: (m: TransformNode) => { x: number; y: number }) {
+    return {
+      gears: this.gears.filter((g) => !g.fixed).map((g) => ({ id: g.id, size: g.size, peg: g.peg, ...pr(g.node) })),
+      pegs: this.pegs.map((p, i) => ({ i, has: !!p.gear, ...pr(p.proxy) })),
+      out: this.outputState,
+      solved: this.solved,
+    };
   }
 
   hint() {

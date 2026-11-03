@@ -11,7 +11,7 @@ import {
   Vector3,
   VertexData,
   Constants,
-} from '@babylonjs/core';
+} from '../babylon';
 import { Batch, Shape, T, col, Col, PaintOpts } from './geo';
 import { WorldCtx } from './ctx';
 import { BRIDGE, COTTAGE, LIGHTHOUSE, PANEL, TURBINE, WATERWHEEL, WINDSOCK, WORKSHOP } from './layout';
@@ -593,8 +593,7 @@ export function buildWorkshop(ctx: WorldCtx): WorkshopHandles {
   boardAnchor.parent = root;
   boardAnchor.position.set(0, floorY + 2.5, -D / 2 + 0.45);
   // board backing
-  put(Shape.rbox(8.6, 5.0, 0.3, 0.15, 2), 0, floorY + 2.45, -D / 2 + 0.3, '#5a3e2b', { ao: 0.2 });
-  put(Shape.rbox(8.2, 4.6, 0.12, 0.1, 1), 0, floorY + 2.45, -D / 2 + 0.42, '#d9c39a');
+  // (the board itself is built by the gear puzzle so it can be lit separately)
 
   // colliders: back & side walls, benches
   const wc = (lx: number, lz: number, hw: number, hd: number) => {
@@ -720,9 +719,9 @@ export function buildDistant(ctx: WorldCtx): DistantHandles {
     const d = 820 + rnd() * 380;
     const x = Math.cos(a) * d;
     const z = Math.sin(a) * d * 0.9 - 100;
-    const h = 35 + rnd() * 70;
-    const r = 140 + rnd() * 140;
-    b.add(Shape.rock(1, 300 + i, 1, 2), Matrix.Scaling(r, h, r * 0.7).multiply(T(x, -h * 0.25, z)), '#6f8fa8', { flat: true, top: '#8fb2c4' });
+    const h = 30 + rnd() * 60;
+    const r = 120 + rnd() * 130;
+    b.add(Shape.rock(1, 300 + i, 1, 3), Matrix.Scaling(r, h, r * 0.7).multiply(T(x, -h * 0.2, z)), '#5f8a78', { top: '#8fb0a8' });
   }
   // small islands
   for (const [ix, iz, s] of [

@@ -1,4 +1,4 @@
-import { AbstractMesh, PickingInfo, Scene, Vector3 } from '@babylonjs/core';
+import { AbstractMesh, PickingInfo, Scene, Vector3 } from '../babylon';
 import type { World } from '../world/world';
 import type { UI } from '../ui/ui';
 import type { AudioEngine } from '../audio/audio';

@@ -6,7 +6,7 @@ import {
   StandardMaterial,
   UniformBuffer,
   FresnelParameters,
-} from '@babylonjs/core';
+} from '../babylon';
 
 /** Global wind clock shared by all wind plugins. */
 export const Wind = { time: 0, strength: 1 };

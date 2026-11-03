@@ -5,7 +5,7 @@ import {
   ImageProcessingConfiguration,
   Scene,
   Color4,
-} from '@babylonjs/core';
+} from '../babylon';
 import { QualityLevel, QualitySettings } from './quality';
 
 export function createEngine(canvas: HTMLCanvasElement, quality: QualityLevel) {

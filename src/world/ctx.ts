@@ -1,4 +1,4 @@
-import { AbstractMesh, Mesh, Scene } from '@babylonjs/core';
+import { AbstractMesh, Mesh, Scene } from '../babylon';
 import { Batch, ChunkedBatch } from './geo';
 import { Mats } from './materials';
 import { Terrain } from './terrain';

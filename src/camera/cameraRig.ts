@@ -1,4 +1,4 @@
-import { FreeCamera, Scene, Vector3 } from '@babylonjs/core';
+import { FreeCamera, Scene, Vector3 } from '../babylon';
 import { clamp, damp, dampAngle, easeInOut, lerp } from '../core/noise';
 import { Terrain } from '../world/terrain';
 
@@ -36,6 +36,7 @@ export class CameraRig {
   private idleLook = 0;
   shake = 0;
   baseFov = 0.92;
+  occlude: ((ax: number, az: number, bx: number, bz: number) => number) | null = null;
 
   constructor(scene: Scene, private terrain: Terrain) {
     this.cam = new FreeCamera('cam', new Vector3(0, 10, -10), scene);
@@ -65,6 +66,15 @@ export class CameraRig {
       const q = Vector3.Lerp(target, p, t);
       const g = this.terrain.sample(q.x, q.z) + 0.9;
       if (q.y < g) p.y += (g - q.y) / t;
+    }
+    if (this.occlude) {
+      const t = this.occlude(target.x, target.z, p.x, p.z);
+      if (t < 1) {
+        const k = Math.max(0.12, t - 0.05);
+        p.x = target.x + (p.x - target.x) * k;
+        p.z = target.z + (p.z - target.z) * k;
+        p.y = target.y + (p.y - target.y) * Math.max(k, 0.5);
+      }
     }
     const g = Math.max(this.terrain.sample(p.x, p.z), 0) + 0.8;
     if (p.y < g) p.y = g;

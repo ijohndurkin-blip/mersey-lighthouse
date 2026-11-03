@@ -1,4 +1,4 @@
-import { Color3, DynamicTexture, Mesh, RawTexture, Scene, StandardMaterial, Texture, VertexData, Constants } from '@babylonjs/core';
+import { Color3, DynamicTexture, Mesh, RawTexture, Scene, StandardMaterial, Texture, VertexData, Constants } from '../babylon';
 import { clamp, distToPolyline, fbm, hash2, lerp, smoothstep, valueNoise } from '../core/noise';
 import {
   BRIDGE,
@@ -341,7 +341,9 @@ export class Terrain {
       if (h < 0.35) c = Color3.Lerp(c, wetSand, smoothstep(0.35, -0.1, h));
       if (h < -0.4) c = Color3.Lerp(c, underwater, smoothstep(-0.4, -2, h));
       // rock on steep slopes and mountain tops
-      const rockAmt = smoothstep(0.24, 0.42, slope + (n2 - 0.5) * 0.12) + smoothstep(15, 24, h) * 0.6;
+      let rockAmt = smoothstep(0.24, 0.42, slope + (n2 - 0.5) * 0.12) + smoothstep(15, 24, h) * 0.6;
+      // mossy, grassy patches on the western mountains
+      if (x < -55) rockAmt *= 0.35 + 0.65 * smoothstep(0.42, 0.62, fbm(x * 0.04 + 9, z * 0.04, 3));
       if (rockAmt > 0) {
         const rc = Color3.Lerp(rockDark, n > 0.5 ? rockWarm : rock, n2);
         c = Color3.Lerp(c, rc, clamp(rockAmt, 0, 1));

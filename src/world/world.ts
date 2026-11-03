@@ -1,4 +1,4 @@
-import { Color3, Mesh, Scene, StandardMaterial, TransformNode, Vector3 } from '@babylonjs/core';
+import { Color3, Mesh, Scene, StandardMaterial, TransformNode, Vector3 } from '../babylon';
 import { Terrain } from './terrain';
 import { Collision } from './collision';
 import { createMaterials, Mats } from './materials';
@@ -194,7 +194,7 @@ export class World {
     dm.setColor3('horizon', k.skyHorizon);
     dm.setVector3('sunDir', this.env.sunDir);
     dm.setFloat('light', 0.55 + (1 - k.night) * 0.5);
-    dm.setFloat('haze', 0.5 + k.night * 0.25);
+    dm.setFloat('haze', 0.42 + k.night * 0.25);
   }
 
   get turbineXZ() {

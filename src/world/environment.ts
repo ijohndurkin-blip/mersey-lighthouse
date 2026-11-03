@@ -15,7 +15,7 @@ import {
   AbstractMesh,
   Vector4,
   Color4,
-} from '@babylonjs/core';
+} from '../babylon';
 import './shaders';
 import { clamp, damp, lerp, smoothstep, distToPolyline } from '../core/noise';
 import { Terrain } from './terrain';

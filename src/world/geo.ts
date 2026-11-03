@@ -15,7 +15,7 @@ import {
   VertexData,
   Material,
   TransformNode,
-} from '@babylonjs/core';
+} from '../babylon';
 import { hash2, rng } from '../core/noise';
 
 export type Col = Color3 | string;

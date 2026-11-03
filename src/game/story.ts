@@ -42,7 +42,7 @@ export const FINN_INTRO: Line[] = [
 ];
 
 export const FINN_LATER: Record<number, Line[]> = {
-  [Stage.Collect]: [{ who: 'finn', text: 'Look for the glittering bundles of wood around the village. One is by the old boat shed, I think!' }],
+  [Stage.Collect]: [{ who: 'finn', text: 'Look for the glittering bundles of wood around the village. One is next to the old boat shed, I think!' }],
   [Stage.BuildBridge]: [{ who: 'finn', text: 'You found them all! Now head up the path to the stream and build that bridge.' }],
   [Stage.ToWorkshop]: [{ who: 'finn', text: 'A new bridge! Splendid work. The Professor will be so pleased.' }],
 };

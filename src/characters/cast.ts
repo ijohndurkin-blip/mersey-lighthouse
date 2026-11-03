@@ -1,4 +1,4 @@
-import { Matrix, Mesh, Scene, TransformNode, Vector3 } from '@babylonjs/core';
+import { Matrix, Mesh, Scene, TransformNode, Vector3 } from '../babylon';
 import { Batch, Shape, T, Col } from '../world/geo';
 import { Mats } from '../world/materials';
 import { RigNodes, node } from './rig';

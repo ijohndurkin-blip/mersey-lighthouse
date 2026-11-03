@@ -10,7 +10,7 @@ import {
   Texture,
   Vector3,
   AbstractMesh,
-} from '@babylonjs/core';
+} from '../babylon';
 
 function makeTex(scene: Scene, kind: 'soft' | 'star' | 'leaf' | 'smoke') {
   const s = 64;

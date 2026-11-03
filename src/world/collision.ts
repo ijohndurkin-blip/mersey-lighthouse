@@ -104,6 +104,42 @@ export class Collision {
     return true;
   }
 
+  /**
+   * Fraction (0..1) along the segment a->b (xz) where it first enters a building-sized box,
+   * used to keep the camera out of walls. Thin/low colliders (fences, rails, quay) are ignored.
+   */
+  cameraHit(ax: number, az: number, bx: number, bz: number): number {
+    let best = 1;
+    for (const box of this.boxes) {
+      if (box.enabled && !box.enabled()) continue;
+      const mn = Math.min(box.hw, box.hd);
+      const mx = Math.max(box.hw, box.hd);
+      if (mn < 0.3 || mx > 12) continue;
+      const pad = 0.3;
+      const a = toLocal(ax - box.x, az - box.z, box.yaw);
+      const b = toLocal(bx - box.x, bz - box.z, box.yaw);
+      const hw = box.hw + pad;
+      const hd = box.hd + pad;
+      // the camera target itself is inside this box: ignore it
+      if (Math.abs(a.lx) < hw && Math.abs(a.lz) < hd) continue;
+      let t0 = 0;
+      let t1 = 1;
+      const dx = b.lx - a.lx;
+      const dz = b.lz - a.lz;
+      const slab = (p: number, d: number, h: number) => {
+        if (Math.abs(d) < 1e-9) return p > -h && p < h;
+        let u0 = (-h - p) / d;
+        let u1 = (h - p) / d;
+        if (u0 > u1) [u0, u1] = [u1, u0];
+        t0 = Math.max(t0, u0);
+        t1 = Math.min(t1, u1);
+        return t0 <= t1;
+      };
+      if (slab(a.lx, dx, hw) && slab(a.lz, dz, hd) && t0 < best) best = t0;
+    }
+    return best;
+  }
+
   /** Push a circle of radius r out of all solid colliders (xz). */
   resolve(pos: { x: number; y: number; z: number }, r: number) {
     for (const c of this.circles) {

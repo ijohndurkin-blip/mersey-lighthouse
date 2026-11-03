@@ -1,4 +1,4 @@
-import { Mesh, Scene, TransformNode, Vector3, Color4 } from '@babylonjs/core';
+import { Mesh, Scene, TransformNode, Vector3, Color4 } from '../babylon';
 import { Batch, Shape, T } from './geo';
 import { World } from './world';
 import { rng } from '../core/noise';
