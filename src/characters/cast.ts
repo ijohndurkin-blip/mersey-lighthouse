@@ -1,14 +1,14 @@
-import { Matrix, Mesh, Scene, TransformNode, Vector3 } from '../babylon';
+import { Material, Matrix, Mesh, Scene, TransformNode, Vector3 } from '../babylon';
 import { Batch, Shape, T, Col } from '../world/geo';
 import { Mats } from '../world/materials';
 import { RigNodes, node } from './rig';
 
 type Build = (b: Batch) => void;
 
-function part(scene: Scene, mats: Mats, name: string, parent: TransformNode, fn: Build, meshes: Mesh[]) {
+function part(scene: Scene, mats: Mats, name: string, parent: TransformNode, fn: Build, meshes: Mesh[], mat?: Material) {
   const b = new Batch();
   fn(b);
-  const m = b.build(name, scene, mats.char, parent);
+  const m = b.build(name, scene, mat ?? mats.char, parent);
   m.isPickable = false;
   meshes.push(m);
   return m;
@@ -99,71 +99,106 @@ export function buildExplorer(scene: Scene, mats: Mats, look: ExplorerLook): Rig
   const white = look.skin;
   const fur = look.hair;
   const trim = look.shirt;
+  const toy = mats.toy;
+  const P = (name: string, parent: TransformNode, fn: Build) => part(scene, mats, name, parent, fn, meshes, toy);
   const root = node('explorer', scene, null);
-  const hips = node('hips', scene, root, 0, 0.52, 0);
+  root.scaling.setAll(0.86);
+  const hips = node('hips', scene, root, 0, 0.5, 0);
   const torso = node('torso', scene, hips, 0, 0, 0);
-  part(scene, mats, 'body', torso, (b) => {
-    // round suit body
-    b.add(Shape.ellipsoid(0.78, 0.86, 0.66, 20), T(0, 0.3, 0), white, { ao: 0.18 });
-    // chest name plate and two belly pockets
-    b.add(Shape.rbox(0.24, 0.1, 0.04, 0.02, 1), T(0, 0.5, 0.3, -0.25, 0, 0), white, { mul: 1.04, ao: 0.1 });
-    for (const sx of [-1, 1]) b.add(Shape.rbox(0.19, 0.2, 0.05, 0.02, 1), T(sx * 0.2, 0.2, 0.31, 0.05, sx * 0.35, 0), white, { mul: 0.97 });
-    // navy collar and shoulder straps
-    b.add(Shape.torus(0.4, 0.07, 18), T(0, 0.68, 0.0), trim);
-    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.22, 0.32, 0.4, 12), T(sx * 0.29, 0.56, 0), trim);
-  }, meshes);
-  const head = node('head', scene, torso, 0, 0.66, 0.02);
-  const hc = 0.4;
-  part(scene, mats, 'head', head, (b) => {
-    b.add(Shape.sphere(0.94, 24), T(0, hc, 0, 0, 0, 0, 1, 0.96, 0.9), white);
-    // ears
+  P('body', torso, (b) => {
+    // pear-shaped suit: wide round tummy, narrower shoulders
+    const prof: [number, number][] = [
+      [0.0, -0.13], [0.2, -0.11], [0.34, -0.04], [0.43, 0.08], [0.46, 0.22], [0.43, 0.36], [0.36, 0.5], [0.28, 0.62], [0.18, 0.7], [0.0, 0.73],
+    ];
+    b.add(Shape.lathe(prof, 36), T(0, 0, 0, 0, 0, 0, 1, 1, 0.84), white, { ao: 0.16 });
+    // chest plate and two rounded pockets (slightly raised panels with seams)
+    b.add(Shape.rbox(0.26, 0.11, 0.05, 0.03, 2), T(0, 0.5, 0.29, -0.42, 0, 0), white, { mul: 1.03 });
     for (const sx of [-1, 1]) {
-      b.add(Shape.ellipsoid(0.32, 0.32, 0.16, 12), T(sx * 0.37, hc + 0.39, -0.05, 0, 0, sx * -0.35), fur);
-      b.add(Shape.ellipsoid(0.19, 0.19, 0.06, 10), T(sx * 0.37, hc + 0.39, 0.03, 0, 0, sx * -0.35), '#3a3a44');
+      b.add(Shape.rbox(0.2, 0.21, 0.05, 0.035, 2), T(sx * 0.21, 0.18, 0.345, -0.05, sx * 0.42, 0), white, { mul: 0.98 });
+      b.add(Shape.rbox(0.2, 0.025, 0.055, 0.01, 1), T(sx * 0.21, 0.275, 0.35, -0.05, sx * 0.42, 0), white, { mul: 0.86 });
     }
-    // eye patches + brows
+    // centre seam
+    b.add(Shape.cyl(0.62, 0.012, 0.012, 6), T(0, 0.2, 0.37, -0.18, 0, 0), white, { mul: 0.88 });
+    // navy collar + vest straps over the shoulders
+    b.add(Shape.torus(0.42, 0.075, 24), T(0, 0.69, 0.0, 0.08, 0, 0), trim);
+    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.24, 0.42, 0.48, 18), T(sx * 0.27, 0.55, -0.01, 0, 0, sx * -0.28), trim);
+  });
+  const head = node('head', scene, torso, 0, 0.66, 0.03);
+  const hc = 0.47;
+  P('head', head, (b) => {
+    // big egg-shaped head, fuller at the cheeks
+    b.add(Shape.sphere(1.04, 32), T(0, hc, 0, 0, 0, 0, 1, 0.94, 0.9), white);
+    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.46, 0.4, 0.38, 20), T(sx * 0.2, hc - 0.17, 0.2), white);
+    // round ears
     for (const sx of [-1, 1]) {
-      b.add(Shape.ellipsoid(0.27, 0.32, 0.12, 14), T(sx * 0.17, hc + 0.05, 0.36, 0.1, sx * 0.3, sx * 0.45), fur);
-      b.add(Shape.rbox(0.15, 0.04, 0.04, 0.02, 1), T(sx * 0.16, hc + 0.27, 0.37, -0.3, sx * 0.25, sx * -0.25), fur);
+      b.add(Shape.ellipsoid(0.36, 0.36, 0.18, 18), T(sx * 0.39, hc + 0.4, -0.06, 0, 0, sx * -0.38), fur);
+      b.add(Shape.ellipsoid(0.21, 0.21, 0.06, 12), T(sx * 0.39, hc + 0.4, 0.03, 0, 0, sx * -0.38), '#34343e');
     }
-    // muzzle, nose and big open smile
-    b.add(Shape.ellipsoid(0.46, 0.32, 0.26, 16), T(0, hc - 0.14, 0.3), white);
-    b.add(Shape.ellipsoid(0.15, 0.1, 0.09, 10), T(0, hc - 0.05, 0.44), fur);
-    b.add(Shape.ellipsoid(0.24, 0.15, 0.08, 12), T(0, hc - 0.21, 0.4), '#5a1a22');
-    b.add(Shape.ellipsoid(0.15, 0.07, 0.06, 10), T(0, hc - 0.25, 0.42), '#f08a96');
-  }, meshes);
+    // large teardrop eye patches
+    for (const sx of [-1, 1]) {
+      b.add(Shape.ellipsoid(0.31, 0.4, 0.14, 20), T(sx * 0.19, hc + 0.04, 0.37, 0.12, sx * 0.34, sx * 0.5), fur);
+    }
+    // thick expressive brows
+    for (const sx of [-1, 1]) {
+      const pts: Vector3[] = [];
+      for (let i = 0; i <= 8; i++) {
+        const t = i / 8;
+        pts.push(new Vector3(sx * (0.08 + t * 0.2), hc + 0.3 + Math.sin(t * Math.PI) * 0.045 - t * 0.03, 0.42 - t * 0.09));
+      }
+      b.add(Shape.tube(pts, (i) => 0.022 + Math.sin((i / 8) * Math.PI) * 0.014, 6), Matrix.Identity(), fur);
+    }
+    // muzzle, nose and a big open grin
+    b.add(Shape.ellipsoid(0.56, 0.38, 0.3, 22), T(0, hc - 0.15, 0.33), white);
+    b.add(Shape.ellipsoid(0.19, 0.13, 0.12, 16), T(0, hc - 0.03, 0.5, -0.15, 0, 0), fur);
+    b.add(Shape.cyl(0.07, 0.018, 0.018, 6), T(0, hc - 0.11, 0.49, 0.25, 0, 0), fur);
+    b.add(Shape.ellipsoid(0.32, 0.2, 0.12, 18), T(0, hc - 0.23, 0.44, -0.1, 0, 0), '#4a121c');
+    b.add(Shape.ellipsoid(0.2, 0.08, 0.08, 14), T(0, hc - 0.28, 0.47), '#f07a8a');
+    b.add(Shape.ellipsoid(0.24, 0.035, 0.05, 12), T(0, hc - 0.145, 0.475), '#f6f2ea');
+  });
   for (const sx of [-1, 1]) {
-    const eyeN = node('eye', scene, head, sx * 0.165, hc + 0.06, 0.41);
+    const eyeN = node('eye', scene, head, sx * 0.18, hc + 0.06, 0.44);
     eyes.push(eyeN);
-    part(scene, mats, 'eyeW', eyeN, (b) => {
-      b.add(Shape.ellipsoid(0.15, 0.17, 0.06, 12), T(0, 0, 0), '#ffffff');
-      b.add(Shape.ellipsoid(0.1, 0.11, 0.04, 10), T(sx * -0.012, -0.01, 0.025), '#5a3418');
-      b.add(Shape.ellipsoid(0.055, 0.06, 0.03, 8), T(sx * -0.012, -0.01, 0.04), '#120c0a');
-    }, meshes);
-    sparkle(scene, mats, eyeN, sx * -0.03 + 0.012, 0.025, 0.055, 0.032, meshes);
+    P('eyeW', eyeN, (b) => {
+      b.add(Shape.ellipsoid(0.17, 0.19, 0.07, 16), T(0, 0, 0, 0, sx * 0.3, 0), '#ffffff');
+      b.add(Shape.ellipsoid(0.115, 0.125, 0.045, 14), T(sx * -0.015, -0.012, 0.03, 0, sx * 0.3, 0), '#6a3c1c', { top: '#3a1e0c' });
+      b.add(Shape.ellipsoid(0.06, 0.068, 0.03, 10), T(sx * -0.016, -0.012, 0.048, 0, sx * 0.3, 0), '#0e0a08');
+    });
+    sparkle(scene, mats, eyeN, sx * -0.035 + 0.014, 0.03, 0.06, 0.036, meshes);
+    sparkle(scene, mats, eyeN, sx * -0.0 - 0.012, -0.035, 0.058, 0.016, meshes);
   }
+  // nose highlight
+  sparkle(scene, mats, head, -0.035, hc + 0.0, 0.565, 0.03, meshes);
   const arm = (sx: number) => {
-    const sh = node('arm', scene, torso, sx * 0.4, 0.5, 0);
-    part(scene, mats, 'upper', sh, (b) => b.add(Shape.capsule(0.32, 0.12, 12), T(sx * 0.02, -0.12, 0), white), meshes);
-    const fore = node('fore', scene, sh, sx * 0.02, -0.26, 0);
-    part(scene, mats, 'fore', fore, (b) => {
-      b.add(Shape.capsule(0.26, 0.11, 12), T(0, -0.07, 0), white);
-      b.add(Shape.torus(0.23, 0.05, 14), T(0, -0.17, 0), trim);
-      b.add(Shape.ellipsoid(0.22, 0.24, 0.2, 12), T(0, -0.29, 0.01), fur);
-    }, meshes);
+    const sh = node('arm', scene, torso, sx * 0.37, 0.5, 0);
+    P('upper', sh, (b) => {
+      b.add(Shape.sphere(0.27, 16), T(0, 0, 0), white);
+      b.add(Shape.capsule(0.34, 0.13, 16), T(sx * 0.015, -0.13, 0), white);
+    });
+    const fore = node('fore', scene, sh, sx * 0.025, -0.26, 0);
+    P('fore', fore, (b) => {
+      b.add(Shape.sphere(0.25, 16), T(0, 0, 0), white);
+      b.add(Shape.capsule(0.27, 0.125, 16), T(0, -0.07, 0), white);
+      b.add(Shape.torus(0.27, 0.065, 20), T(0, -0.17, 0), trim);
+      b.add(Shape.ellipsoid(0.25, 0.28, 0.22, 16), T(0, -0.3, 0.01), fur);
+      b.add(Shape.ellipsoid(0.1, 0.13, 0.1, 10), T(sx * -0.1, -0.25, 0.08, 0, 0, sx * 0.5), fur);
+    });
     return { sh, fore };
   };
   const L = arm(-1);
   const R = arm(1);
   const leg = (sx: number) => {
     const th = node('leg', scene, hips, sx * 0.17, -0.02, 0);
-    part(scene, mats, 'thigh', th, (b) => b.add(Shape.capsule(0.3, 0.14, 12), T(0, -0.1, 0), white), meshes);
-    const sh = node('shin', scene, th, 0, -0.22, 0);
-    part(scene, mats, 'shin', sh, (b) => {
-      b.add(Shape.capsule(0.22, 0.13, 12), T(0, -0.06, 0), white);
-      b.add(Shape.torus(0.3, 0.06, 16), T(0, -0.13, 0), trim);
-      b.add(Shape.rbox(0.28, 0.16, 0.36, 0.08, 2), T(0, -0.2, 0.05), white, { ao: 0.2 });
-    }, meshes);
+    P('thigh', th, (b) => {
+      b.add(Shape.sphere(0.32, 16), T(0, 0, 0), white);
+      b.add(Shape.capsule(0.3, 0.16, 16), T(0, -0.1, 0), white);
+    });
+    const sh = node('shin', scene, th, 0, -0.2, 0);
+    P('shin', sh, (b) => {
+      b.add(Shape.sphere(0.3, 16), T(0, 0, 0), white);
+      b.add(Shape.capsule(0.2, 0.15, 16), T(0, -0.05, 0), white);
+      b.add(Shape.torus(0.34, 0.07, 22), T(0, -0.11, 0), trim);
+      b.add(Shape.rbox(0.33, 0.2, 0.44, 0.1, 3), T(0, -0.2, 0.05), white, { ao: 0.22 });
+    });
     return { th, sh };
   };
   const LL = leg(-1);

@@ -75,6 +75,7 @@ export interface Mats {
   ghost: StandardMaterial;
   energy: StandardMaterial;
   metal: StandardMaterial;
+  toy: StandardMaterial;
 }
 
 export function createMaterials(scene: Scene): Mats {
@@ -136,5 +137,16 @@ export function createMaterials(scene: Scene): Mats {
   metal.specularColor = new Color3(0.7, 0.62, 0.45);
   metal.specularPower = 48;
 
-  return { vc, vcFoliage, char, glow, windows, lamp, sparkle, ghost, energy, metal };
+  // soft glossy vinyl-toy finish for the hero panda
+  const toy = new StandardMaterial('toy', scene);
+  toy.diffuseColor = Color3.White();
+  toy.specularColor = new Color3(0.32, 0.32, 0.32);
+  toy.specularPower = 56;
+  toy.emissiveFresnelParameters = new FresnelParameters();
+  toy.emissiveFresnelParameters.bias = 0.5;
+  toy.emissiveFresnelParameters.power = 2.2;
+  toy.emissiveFresnelParameters.leftColor = new Color3(0.36, 0.37, 0.4);
+  toy.emissiveFresnelParameters.rightColor = new Color3(0.17, 0.16, 0.14);
+
+  return { vc, vcFoliage, char, glow, windows, lamp, sparkle, ghost, energy, metal, toy };
 }
