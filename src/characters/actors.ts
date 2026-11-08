@@ -37,7 +37,8 @@ export class Player {
 
   constructor(public nodes: RigNodes, private col: Collision, shadow: ShadowGenerator) {
     this.rig = new Rig(nodes);
-    this.rig.stride = 1.15;
+    this.rig.stride = 0.85;
+    this.rig.foreScale = 0.3;
     this.pos = nodes.root.position;
     addShadows(nodes.meshes, shadow);
     this.rig.onStep = () => this.onStep?.(this.surface, Math.hypot(this.vx, this.vz) > 6);

@@ -39,6 +39,8 @@ export class Rig {
   private lookTarget = 0;
   hipsBaseY: number;
   stride = 1.25;
+  /** how much the elbows bend (the panda's arms are one smooth piece) */
+  foreScale = 1;
   bounce = 1;
   onStep?: (foot: number) => void;
   private lastStepSign = 0;
@@ -224,8 +226,8 @@ export class Rig {
     set(n.shinR, shinR, 0, 0);
     set(n.armL, armLx, 0, armLz);
     set(n.armR, armRx, 0, armRz);
-    set(n.foreL, foreL, 0, 0);
-    set(n.foreR, foreR, 0, 0);
+    set(n.foreL, foreL * this.foreScale, 0, 0);
+    set(n.foreR, foreR * this.foreScale, 0, 0);
     set(n.torso, torsoX, torsoY, torsoZ);
     set(n.head, headX, headY, headZ);
     n.hips.position.y += (hipsY - n.hips.position.y) * (1 - Math.exp(-20 * dt));

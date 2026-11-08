@@ -94,110 +94,158 @@ export const EXPLORER_LOOKS: ExplorerLook[] = [
 ];
 
 export function buildExplorer(scene: Scene, mats: Mats, look: ExplorerLook): RigNodes {
+  // Proportions measured from the reference art (total height ~1.7 units):
+  // head ~41% of height, barrel tummy, short angled arms, short thick legs.
   const meshes: Mesh[] = [];
   const eyes: TransformNode[] = [];
-  const white = look.skin;
-  const fur = look.hair;
+  const white = '#f6f1e7';
+  const fur = '#1b1b21';
   const trim = look.shirt;
   const toy = mats.toy;
   const P = (name: string, parent: TransformNode, fn: Build) => part(scene, mats, name, parent, fn, meshes, toy);
   const root = node('explorer', scene, null);
-  root.scaling.setAll(0.86);
-  const hips = node('hips', scene, root, 0, 0.5, 0);
+  const hips = node('hips', scene, root, 0, 0.36, 0);
   const torso = node('torso', scene, hips, 0, 0, 0);
+  const DEPTH = 0.84;
   P('body', torso, (b) => {
-    // pear-shaped suit: wide round tummy, narrower shoulders
     const prof: [number, number][] = [
-      [0.0, -0.13], [0.2, -0.11], [0.34, -0.04], [0.43, 0.08], [0.46, 0.22], [0.43, 0.36], [0.36, 0.5], [0.28, 0.62], [0.18, 0.7], [0.0, 0.73],
+      [0, -0.1], [0.2, -0.085], [0.3, -0.04], [0.36, 0.04], [0.39, 0.14], [0.392, 0.24], [0.378, 0.34], [0.352, 0.44],
+      [0.322, 0.52], [0.275, 0.59], [0.2, 0.64], [0.11, 0.665], [0, 0.672],
     ];
-    b.add(Shape.lathe(prof, 36), T(0, 0, 0, 0, 0, 0, 1, 1, 0.84), white, { ao: 0.16 });
-    // chest plate and two rounded pockets (slightly raised panels with seams)
-    b.add(Shape.rbox(0.26, 0.11, 0.05, 0.03, 2), T(0, 0.5, 0.29, -0.42, 0, 0), white, { mul: 1.03 });
+    b.add(Shape.lathe(prof, 48), T(0, 0, 0, 0, 0, 0, 1, 1, DEPTH), white, { ao: 0.12 });
+    // chest name plate
+    b.add(Shape.rbox(0.25, 0.095, 0.04, 0.02, 2), T(0, 0.47, 0.283, -0.45, 0, 0), white, { mul: 1.03 });
+    // pockets on the sides of the tummy (raised panels)
     for (const sx of [-1, 1]) {
-      b.add(Shape.rbox(0.2, 0.21, 0.05, 0.035, 2), T(sx * 0.21, 0.18, 0.345, -0.05, sx * 0.42, 0), white, { mul: 0.98 });
-      b.add(Shape.rbox(0.2, 0.025, 0.055, 0.01, 1), T(sx * 0.21, 0.275, 0.35, -0.05, sx * 0.42, 0), white, { mul: 0.86 });
+      b.add(Shape.rbox(0.21, 0.205, 0.035, 0.022, 2), T(sx * 0.255, 0.22, 0.245, -0.05, sx * 0.78, sx * -0.07), white, { mul: 1.02 });
     }
-    // centre seam
-    b.add(Shape.cyl(0.62, 0.012, 0.012, 6), T(0, 0.2, 0.37, -0.18, 0, 0), white, { mul: 0.88 });
-    // navy collar + vest straps over the shoulders
-    b.add(Shape.torus(0.42, 0.075, 24), T(0, 0.69, 0.0, 0.08, 0, 0), trim);
-    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.24, 0.42, 0.48, 18), T(sx * 0.27, 0.55, -0.01, 0, 0, sx * -0.28), trim);
+    // navy collar and vest straps over the shoulders
+    b.add(Shape.torus(0.37, 0.075, 32), T(0, 0.635, 0.01, 0.1, 0, 0), trim);
+    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.17, 0.32, 0.44, 24), T(sx * 0.27, 0.53, 0, 0, 0, sx * -0.42), trim);
   });
-  const head = node('head', scene, torso, 0, 0.66, 0.03);
-  const hc = 0.47;
+
+  // ---------------- head: one smooth bell shape, widest at the cheeks
+  const head = node('head', scene, torso, 0, 0.64, 0.02);
+  const hc = 0.33;
+  const HD = 0.84; // head depth scale
+  const headProf: [number, number][] = [
+    [0, -0.33], [0.16, -0.315], [0.27, -0.28], [0.355, -0.22], [0.405, -0.14], [0.418, -0.05], [0.408, 0.05], [0.38, 0.13],
+    [0.33, 0.2], [0.26, 0.26], [0.17, 0.305], [0.08, 0.328], [0, 0.334],
+  ];
+  const headR = (y: number) => {
+    for (let i = 0; i < headProf.length - 1; i++) {
+      const [r0, y0] = headProf[i];
+      const [r1, y1] = headProf[i + 1];
+      if (y >= y0 && y <= y1) return r0 + ((r1 - r0) * (y - y0)) / (y1 - y0);
+    }
+    return 0;
+  };
+  // z of the face surface at (x, y) relative to the head centre
+  const faceZ = (x: number, y: number) => HD * Math.sqrt(Math.max(0, headR(y) ** 2 - x * x));
   P('head', head, (b) => {
-    // big egg-shaped head, fuller at the cheeks
-    b.add(Shape.sphere(1.04, 32), T(0, hc, 0, 0, 0, 0, 1, 0.94, 0.9), white);
-    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.46, 0.4, 0.38, 20), T(sx * 0.2, hc - 0.17, 0.2), white);
-    // round ears
+    b.add(Shape.lathe(headProf, 56), T(0, hc, 0, 0, 0, 0, 1, 1, HD), white);
+    // gentle muzzle bulge around the mouth
+    b.add(Shape.ellipsoid(0.44, 0.24, 0.14, 32), T(0, hc - 0.1, faceZ(0, -0.1) - 0.065), white);
+    // ears
     for (const sx of [-1, 1]) {
-      b.add(Shape.ellipsoid(0.36, 0.36, 0.18, 18), T(sx * 0.39, hc + 0.4, -0.06, 0, 0, sx * -0.38), fur);
-      b.add(Shape.ellipsoid(0.21, 0.21, 0.06, 12), T(sx * 0.39, hc + 0.4, 0.03, 0, 0, sx * -0.38), '#34343e');
+      b.add(Shape.ellipsoid(0.25, 0.25, 0.13, 24), T(sx * 0.33, hc + 0.215, -0.04, 0, sx * 0.3, 0), fur);
+      b.add(Shape.ellipsoid(0.15, 0.15, 0.04, 16), T(sx * 0.33, hc + 0.215, 0.015, 0, sx * 0.3, 0), '#303038');
     }
-    // large teardrop eye patches
+    // eye patches: big tilted beans, tops leaning toward the nose
     for (const sx of [-1, 1]) {
-      b.add(Shape.ellipsoid(0.31, 0.4, 0.14, 20), T(sx * 0.19, hc + 0.04, 0.37, 0.12, sx * 0.34, sx * 0.5), fur);
+      const x = sx * 0.2;
+      const y = 0.03;
+      const yaw = Math.atan2(x, faceZ(x, y) / HD);
+      b.add(Shape.ellipsoid(0.25, 0.3, 0.09, 28), T(x, hc + y, faceZ(x, y) - 0.025, 0, yaw * 0.9, sx * 0.38), fur);
     }
-    // thick expressive brows
+    // thick arched brows
     for (const sx of [-1, 1]) {
       const pts: Vector3[] = [];
-      for (let i = 0; i <= 8; i++) {
-        const t = i / 8;
-        pts.push(new Vector3(sx * (0.08 + t * 0.2), hc + 0.3 + Math.sin(t * Math.PI) * 0.045 - t * 0.03, 0.42 - t * 0.09));
+      for (let i = 0; i <= 10; i++) {
+        const t = i / 10;
+        const x = sx * (0.075 + t * 0.17);
+        const y = 0.215 + Math.sin(t * Math.PI) * 0.03 - t * 0.02;
+        pts.push(new Vector3(x, hc + y, faceZ(x, y) + 0.012));
       }
-      b.add(Shape.tube(pts, (i) => 0.022 + Math.sin((i / 8) * Math.PI) * 0.014, 6), Matrix.Identity(), fur);
+      b.add(Shape.tube(pts, (i) => 0.024 + Math.sin((i / 10) * Math.PI) * 0.016, 8), Matrix.Identity(), fur);
     }
-    // muzzle, nose and a big open grin
-    b.add(Shape.ellipsoid(0.56, 0.38, 0.3, 22), T(0, hc - 0.15, 0.33), white);
-    b.add(Shape.ellipsoid(0.19, 0.13, 0.12, 16), T(0, hc - 0.03, 0.5, -0.15, 0, 0), fur);
-    b.add(Shape.cyl(0.07, 0.018, 0.018, 6), T(0, hc - 0.11, 0.49, 0.25, 0, 0), fur);
-    b.add(Shape.ellipsoid(0.32, 0.2, 0.12, 18), T(0, hc - 0.23, 0.44, -0.1, 0, 0), '#4a121c');
-    b.add(Shape.ellipsoid(0.2, 0.08, 0.08, 14), T(0, hc - 0.28, 0.47), '#f07a8a');
-    b.add(Shape.ellipsoid(0.24, 0.035, 0.05, 12), T(0, hc - 0.145, 0.475), '#f6f2ea');
+    // nose: rounded, wider at the top
+    const nz = faceZ(0, -0.02);
+    b.add(Shape.ellipsoid(0.155, 0.1, 0.1, 24), T(0, hc - 0.005, nz + 0.012, -0.1, 0, 0), fur);
+    b.add(Shape.ellipsoid(0.1, 0.05, 0.08, 16), T(0, hc - 0.04, nz + 0.0), fur);
+    // philtrum line down to the mouth
+    b.add(Shape.cyl(0.05, 0.012, 0.012, 6), T(0, hc - 0.075, faceZ(0, -0.075) + 0.025, 0.3, 0, 0), fur);
+    // big open D-shaped grin: flat top with raised corners, round bottom, tongue
+    const mouth: [number, number][] = [];
+    const MW = 0.155;
+    for (let i = 0; i <= 12; i++) {
+      const x = -MW + (i / 12) * MW * 2;
+      mouth.push([x, 0.012 + Math.pow(Math.abs(x) / MW, 3) * 0.03]);
+    }
+    for (let i = 1; i < 20; i++) {
+      const a = (i / 20) * Math.PI;
+      mouth.push([Math.cos(a) * MW * 0.98, -Math.sin(a) * 0.15]);
+    }
+    const my = -0.115;
+    const mz = faceZ(0, my - 0.06);
+    b.add(Shape.prism(mouth, 0.05), T(0, hc + my, mz - 0.005, -0.32, 0, 0), '#6a1824', { top: '#3c0c14' });
+    const tongue: [number, number][] = [];
+    for (let i = 0; i <= 14; i++) {
+      const a = (i / 14) * Math.PI;
+      tongue.push([Math.cos(a) * 0.085, -0.045 - Math.sin(a) * 0.05 + (i === 0 || i === 14 ? 0.03 : 0)]);
+    }
+    b.add(Shape.prism(tongue, 0.05), T(0, hc + my - 0.05, mz + 0.05, -0.32, 0, 0), '#ef8494');
   });
   for (const sx of [-1, 1]) {
-    const eyeN = node('eye', scene, head, sx * 0.18, hc + 0.06, 0.44);
+    const x = sx * 0.148;
+    const y = 0.05;
+    const eyeN = node('eye', scene, head, x, hc + y, faceZ(x, y) + 0.005);
+    eyeN.rotation.y = Math.atan2(x, faceZ(x, y) / HD) * 0.8;
     eyes.push(eyeN);
     P('eyeW', eyeN, (b) => {
-      b.add(Shape.ellipsoid(0.17, 0.19, 0.07, 16), T(0, 0, 0, 0, sx * 0.3, 0), '#ffffff');
-      b.add(Shape.ellipsoid(0.115, 0.125, 0.045, 14), T(sx * -0.015, -0.012, 0.03, 0, sx * 0.3, 0), '#6a3c1c', { top: '#3a1e0c' });
-      b.add(Shape.ellipsoid(0.06, 0.068, 0.03, 10), T(sx * -0.016, -0.012, 0.048, 0, sx * 0.3, 0), '#0e0a08');
+      b.add(Shape.ellipsoid(0.13, 0.14, 0.05, 24), T(0, 0, 0), '#ffffff');
+      b.add(Shape.ellipsoid(0.095, 0.1, 0.03, 20), T(sx * -0.006, -0.006, 0.022), '#6b3a1a', { top: '#2e160a' });
+      b.add(Shape.ellipsoid(0.052, 0.056, 0.02, 14), T(sx * -0.006, -0.006, 0.034), '#0c0806');
     });
-    sparkle(scene, mats, eyeN, sx * -0.035 + 0.014, 0.03, 0.06, 0.036, meshes);
-    sparkle(scene, mats, eyeN, sx * -0.0 - 0.012, -0.035, 0.058, 0.016, meshes);
+    sparkle(scene, mats, eyeN, 0.018, 0.022, 0.044, 0.03, meshes);
+    sparkle(scene, mats, eyeN, -0.014, -0.022, 0.043, 0.012, meshes);
   }
-  // nose highlight
-  sparkle(scene, mats, head, -0.035, hc + 0.0, 0.565, 0.03, meshes);
+  sparkle(scene, mats, head, -0.03, hc + 0.015, faceZ(0, 0) + 0.06, 0.028, meshes);
+
+  // ---------------- arms: one smooth piece from shoulder to cuff, angled out
+  const ARM_TILT = 0.46;
+  const armProf: [number, number][] = [
+    [0, 0.06], [0.06, 0.05], [0.087, 0.02], [0.088, -0.06], [0.083, -0.16], [0.078, -0.26], [0.074, -0.31], [0.06, -0.335], [0, -0.34],
+  ];
   const arm = (sx: number) => {
-    const sh = node('arm', scene, torso, sx * 0.37, 0.5, 0);
-    P('upper', sh, (b) => {
-      b.add(Shape.sphere(0.27, 16), T(0, 0, 0), white);
-      b.add(Shape.capsule(0.34, 0.13, 16), T(sx * 0.015, -0.13, 0), white);
-    });
-    const fore = node('fore', scene, sh, sx * 0.025, -0.26, 0);
+    const sh = node('arm', scene, torso, sx * 0.345, 0.52, 0.02);
+    P('upper', sh, (b) => b.add(Shape.lathe(armProf, 24), T(0, 0, 0, 0, 0, sx * ARM_TILT), white));
+    const wx = sx * Math.sin(ARM_TILT) * 0.3;
+    const wy = -Math.cos(ARM_TILT) * 0.3;
+    const fore = node('fore', scene, sh, wx, wy, 0);
     P('fore', fore, (b) => {
-      b.add(Shape.sphere(0.25, 16), T(0, 0, 0), white);
-      b.add(Shape.capsule(0.27, 0.125, 16), T(0, -0.07, 0), white);
-      b.add(Shape.torus(0.27, 0.065, 20), T(0, -0.17, 0), trim);
-      b.add(Shape.ellipsoid(0.25, 0.28, 0.22, 16), T(0, -0.3, 0.01), fur);
-      b.add(Shape.ellipsoid(0.1, 0.13, 0.1, 10), T(sx * -0.1, -0.25, 0.08, 0, 0, sx * 0.5), fur);
+      const R = T(0, 0, 0, 0, 0, sx * ARM_TILT);
+      b.add(Shape.torus(0.17, 0.052, 28), T(0, 0, 0).multiply(R), trim);
+      // black mitten with curled fingers and a thumb
+      b.add(Shape.ellipsoid(0.165, 0.2, 0.15, 24), T(0, -0.115, 0.005).multiply(R), fur);
+      b.add(Shape.ellipsoid(0.15, 0.08, 0.13, 16), T(0, -0.19, 0.025).multiply(R), fur);
+      b.add(Shape.ellipsoid(0.07, 0.1, 0.07, 14), T(sx * -0.065, -0.08, 0.06, 0, 0, sx * 0.5).multiply(R), fur);
     });
     return { sh, fore };
   };
   const L = arm(-1);
   const R = arm(1);
+
+  // ---------------- legs: the navy rings hide the knee joint
   const leg = (sx: number) => {
-    const th = node('leg', scene, hips, sx * 0.17, -0.02, 0);
-    P('thigh', th, (b) => {
-      b.add(Shape.sphere(0.32, 16), T(0, 0, 0), white);
-      b.add(Shape.capsule(0.3, 0.16, 16), T(0, -0.1, 0), white);
-    });
-    const sh = node('shin', scene, th, 0, -0.2, 0);
+    const th = node('leg', scene, hips, sx * 0.19, -0.03, 0);
+    P('thigh', th, (b) => b.add(Shape.lathe([[0, 0.14], [0.11, 0.13], [0.128, 0.08], [0.128, -0.06], [0.124, -0.13], [0.0, -0.135]], 32), T(0, 0, 0), white));
+    const sh = node('shin', scene, th, 0, -0.13, 0);
     P('shin', sh, (b) => {
-      b.add(Shape.sphere(0.3, 16), T(0, 0, 0), white);
-      b.add(Shape.capsule(0.2, 0.15, 16), T(0, -0.05, 0), white);
-      b.add(Shape.torus(0.34, 0.07, 22), T(0, -0.11, 0), trim);
-      b.add(Shape.rbox(0.33, 0.2, 0.44, 0.1, 3), T(0, -0.2, 0.05), white, { ao: 0.22 });
+      b.add(Shape.torus(0.29, 0.085, 36), T(0, 0.005, 0), trim);
+      b.add(Shape.cyl(0.14, 0.24, 0.25, 32), T(0, -0.04, 0), white);
+      // bulbous rounded boot
+      b.add(Shape.rbox(0.29, 0.17, 0.37, 0.085, 4), T(0, -0.115, 0.04), white, { ao: 0.18 });
     });
     return { th, sh };
   };
