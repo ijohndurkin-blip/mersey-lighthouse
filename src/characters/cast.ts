@@ -169,32 +169,52 @@ export function buildExplorer(scene: Scene, mats: Mats, look: ExplorerLook): Rig
       }
       b.add(Shape.tube(pts, (i) => 0.024 + Math.sin((i / 10) * Math.PI) * 0.016, 8), Matrix.Identity(), fur);
     }
-    // nose: rounded, wider at the top
-    const nz = faceZ(0, -0.02);
-    b.add(Shape.ellipsoid(0.155, 0.1, 0.1, 24), T(0, hc - 0.005, nz + 0.012, -0.1, 0, 0), fur);
-    b.add(Shape.ellipsoid(0.1, 0.05, 0.08, 16), T(0, hc - 0.04, nz + 0.0), fur);
-    // philtrum line down to the mouth
-    b.add(Shape.cyl(0.05, 0.012, 0.012, 6), T(0, hc - 0.075, faceZ(0, -0.075) + 0.025, 0.3, 0, 0), fur);
-    // big open D-shaped grin: flat top with raised corners, round bottom, tongue
-    const mouth: [number, number][] = [];
-    const MW = 0.155;
-    for (let i = 0; i <= 12; i++) {
-      const x = -MW + (i / 12) * MW * 2;
-      mouth.push([x, 0.012 + Math.pow(Math.abs(x) / MW, 3) * 0.03]);
-    }
-    for (let i = 1; i < 20; i++) {
-      const a = (i / 20) * Math.PI;
-      mouth.push([Math.cos(a) * MW * 0.98, -Math.sin(a) * 0.15]);
-    }
-    const my = -0.115;
+    // ---- mouth area, modelled on the reference close-up
+    const my = -0.12;
     const mz = faceZ(0, my - 0.06);
-    b.add(Shape.prism(mouth, 0.05), T(0, hc + my, mz - 0.005, -0.32, 0, 0), '#6a1824', { top: '#3c0c14' });
-    const tongue: [number, number][] = [];
+    // the mouth plane: everything below is placed in this local frame
+    const M = T(0, hc + my, mz - 0.005, -0.32, 0, 0);
+    const at = (x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) => T(x, y, z, rx, ry, rz).multiply(M);
+    const MW = 0.16;
+    const topY = (x: number) => 0.01 + Math.pow(Math.abs(x) / MW, 3) * 0.035;
+    // open mouth cavity (dark, deeper red toward the top)
+    const mouth: [number, number][] = [];
     for (let i = 0; i <= 14; i++) {
-      const a = (i / 14) * Math.PI;
-      tongue.push([Math.cos(a) * 0.085, -0.045 - Math.sin(a) * 0.05 + (i === 0 || i === 14 ? 0.03 : 0)]);
+      const x = -MW + (i / 14) * MW * 2;
+      mouth.push([x, topY(x)]);
     }
-    b.add(Shape.prism(tongue, 0.05), T(0, hc + my - 0.05, mz + 0.05, -0.32, 0, 0), '#ef8494');
+    for (let i = 1; i < 22; i++) {
+      const a = (i / 22) * Math.PI;
+      mouth.push([Math.cos(a) * MW * 0.98, -Math.sin(a) * 0.155]);
+    }
+    b.add(Shape.prism(mouth, 0.05), at(0, 0, 0), '#7a1c2a', { top: '#38080f' });
+    // big pink tongue filling the bottom of the mouth
+    b.add(Shape.ellipsoid(0.2, 0.1, 0.05, 24), at(0, -0.1, 0.028), '#f28a99', { top: '#f6a3b0' });
+    b.add(Shape.cyl(0.05, 0.006, 0.006, 6), at(0, -0.085, 0.052), '#d86a7c');
+    // row of upper teeth just inside the top edge
+    const teeth: Vector3[] = [];
+    for (let i = 0; i <= 12; i++) {
+      const x = -MW * 0.8 + (i / 12) * MW * 1.6;
+      teeth.push(new Vector3(x, topY(x) - 0.024, 0.028));
+    }
+    b.add(Shape.tube(teeth, 0.019, 8), M, '#fbf8f0');
+    // thick lower lip rim around the bottom of the mouth
+    const rim: Vector3[] = [];
+    for (let i = 0; i <= 24; i++) {
+      const a = 0.04 * Math.PI + (i / 24) * Math.PI * 0.92;
+      rim.push(new Vector3(Math.cos(a) * MW * 1.04, -Math.sin(a) * 0.165, 0.02));
+    }
+    b.add(Shape.tube(rim, (i) => 0.02 + Math.sin((i / 24) * Math.PI) * 0.01, 8), M, white);
+    // puffy upper lip: two rounded cheeks meeting under the nose (the "w")
+    for (const sx of [-1, 1]) {
+      b.add(Shape.ellipsoid(0.17, 0.095, 0.08, 20), at(sx * 0.068, 0.045, 0.025, 0, 0, sx * 0.12), white);
+    }
+    // little groove between the lip puffs
+    b.add(Shape.cyl(0.05, 0.007, 0.007, 6), at(0, 0.065, 0.06, 0.15, 0, 0), '#cfc6b8');
+    // big glossy rounded nose sitting right above the lip
+    const nz = faceZ(0, -0.02);
+    b.add(Shape.ellipsoid(0.18, 0.115, 0.12, 28), T(0, hc + 0.02, nz + 0.03, -0.18, 0, 0), fur);
+    b.add(Shape.ellipsoid(0.12, 0.06, 0.09, 18), T(0, hc - 0.018, nz + 0.022, -0.1, 0, 0), fur);
   });
   for (const sx of [-1, 1]) {
     const x = sx * 0.148;
@@ -207,10 +227,10 @@ export function buildExplorer(scene: Scene, mats: Mats, look: ExplorerLook): Rig
       b.add(Shape.ellipsoid(0.095, 0.1, 0.03, 20), T(sx * -0.006, -0.006, 0.022), '#6b3a1a', { top: '#2e160a' });
       b.add(Shape.ellipsoid(0.052, 0.056, 0.02, 14), T(sx * -0.006, -0.006, 0.034), '#0c0806');
     });
-    sparkle(scene, mats, eyeN, 0.018, 0.022, 0.044, 0.03, meshes);
+    sparkle(scene, mats, eyeN, 0.018, 0.022, 0.044, 0.022, meshes);
     sparkle(scene, mats, eyeN, -0.014, -0.022, 0.043, 0.012, meshes);
   }
-  sparkle(scene, mats, head, -0.03, hc + 0.015, faceZ(0, 0) + 0.06, 0.028, meshes);
+  sparkle(scene, mats, head, -0.04, hc + 0.05, faceZ(0, 0) + 0.075, 0.02, meshes);
 
   // ---------------- arms: one smooth piece from shoulder to cuff, angled out
   const ARM_TILT = 0.46;
