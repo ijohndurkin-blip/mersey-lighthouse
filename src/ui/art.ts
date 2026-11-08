@@ -63,18 +63,20 @@ export const PORTRAITS: Record<string, string> = {
   <path d="M44 68 Q50 72 56 68" stroke="#8a3a32" stroke-width="2" fill="none" stroke-linecap="round"/>
 </svg>`,
   explorer: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="50" fill="#ffc9a8"/>
-  <path d="M14 100 Q18 76 50 74 Q82 76 86 100 Z" fill="#2fb3a8"/>
-  <path d="M34 74 Q50 82 66 74 L64 80 Q50 88 36 80 Z" fill="#e8505b"/>
-  <circle cx="50" cy="50" r="25" fill="#f6d2b4"/>
-  <path d="M25 46 Q26 24 50 24 Q74 24 75 46 Q70 36 58 36 Q50 30 42 36 Q30 36 25 46 Z" fill="#6a4026"/>
-  <circle cx="41" cy="52" r="4" fill="#3a2a20"/><circle cx="59" cy="52" r="4" fill="#3a2a20"/>
-  <circle cx="42.3" cy="50.6" r="1.4" fill="#fff"/><circle cx="60.3" cy="50.6" r="1.4" fill="#fff"/>
-  <ellipse cx="34" cy="59" rx="4.5" ry="2.6" fill="#ff9f9f"/><ellipse cx="66" cy="59" rx="4.5" ry="2.6" fill="#ff9f9f"/>
-  <path d="M43 62 Q50 68 57 62" stroke="#8a3a32" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  <path d="M16 30 Q50 18 84 30 Q86 33 80 33 L20 33 Q14 33 16 30 Z" fill="#e8c27a"/>
-  <path d="M30 31 Q32 10 50 10 Q68 10 70 31 Z" fill="#e8c27a"/>
-  <rect x="30" y="24" width="40" height="6" rx="2" fill="#c0473f"/>
+  <circle cx="50" cy="50" r="50" fill="#9fd0f0"/>
+  <path d="M16 100 Q20 76 50 74 Q80 76 84 100 Z" fill="#f4f1ea"/>
+  <path d="M30 76 Q50 84 70 76" stroke="#24448a" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <circle cx="26" cy="22" r="10" fill="#1c1c22"/><circle cx="74" cy="22" r="10" fill="#1c1c22"/>
+  <ellipse cx="50" cy="46" rx="30" ry="28" fill="#f4f1ea"/>
+  <ellipse cx="38" cy="42" rx="9" ry="11" transform="rotate(-25 38 42)" fill="#1c1c22"/>
+  <ellipse cx="62" cy="42" rx="9" ry="11" transform="rotate(25 62 42)" fill="#1c1c22"/>
+  <circle cx="39" cy="42" r="5" fill="#fff"/><circle cx="61" cy="42" r="5" fill="#fff"/>
+  <circle cx="39.5" cy="43" r="3" fill="#5a3418"/><circle cx="60.5" cy="43" r="3" fill="#5a3418"/>
+  <circle cx="40.5" cy="41.5" r="1.1" fill="#fff"/><circle cx="61.5" cy="41.5" r="1.1" fill="#fff"/>
+  <path d="M32 30 q6 -4 11 0 M57 30 q5 -4 11 0" stroke="#1c1c22" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="50" cy="56" rx="12" ry="9" fill="#fbf9f4"/>
+  <ellipse cx="50" cy="51" rx="4.5" ry="3" fill="#1c1c22"/>
+  <path d="M42 57 Q50 68 58 57 Z" fill="#5a1a22"/><ellipse cx="50" cy="62" rx="4" ry="2" fill="#f08a96"/>
 </svg>`,
 };
 

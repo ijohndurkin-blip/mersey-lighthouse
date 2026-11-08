@@ -136,7 +136,7 @@ export class UI {
     const el = h(`<div class="title">
       <div class="logo"><h1><span class="wave">Mission</span> <span class="wave" style="animation-delay:.3s">Mersey</span></h1><h2>The Lighthouse Rescue</h2></div>
       <div class="actions">
-        <div class="looks"><span>Your explorer:</span></div>
+        <div class="looks"><span>Your panda:</span></div>
         <div class="row">
           <button class="btn start">▶ Start Adventure</button>
           ${opts.canContinue ? '<button class="btn blue cont">Continue</button>' : ''}
@@ -147,7 +147,7 @@ export class UI {
     const credit = h(`<div class="credit">An original adventure · Developed by <b>Rare² Labs</b></div>`);
     const looks = el.querySelector('.looks') as HTMLElement;
     opts.looks.forEach((l, i) => {
-      const b = h(`<button aria-label="Explorer style ${i + 1}" class="${i === opts.look ? 'sel' : ''}"><svg viewBox="0 0 40 40"><rect width="40" height="40" fill="${l.shirt}"/><circle cx="20" cy="18" r="11" fill="${l.skin}"/><path d="M9 16q1-9 11-9t11 9q-4-4-11-4t-11 4z" fill="${l.hair}"/><circle cx="16" cy="19" r="1.6" fill="#222"/><circle cx="24" cy="19" r="1.6" fill="#222"/><path d="M16 24q4 3 8 0" stroke="#8a3a32" stroke-width="1.6" fill="none"/></svg></button>`);
+      const b = h(`<button aria-label="Explorer style ${i + 1}" class="${i === opts.look ? 'sel' : ''}"><svg viewBox="0 0 40 40"><rect width="40" height="40" fill="${l.shirt}"/><circle cx="11" cy="11" r="5" fill="${l.hair}"/><circle cx="29" cy="11" r="5" fill="${l.hair}"/><circle cx="20" cy="21" r="12" fill="${l.skin}"/><ellipse cx="15" cy="20" rx="3.5" ry="4.5" fill="${l.hair}"/><ellipse cx="25" cy="20" rx="3.5" ry="4.5" fill="${l.hair}"/><circle cx="15" cy="20" r="1.6" fill="#fff"/><circle cx="25" cy="20" r="1.6" fill="#fff"/><ellipse cx="20" cy="25" rx="2" ry="1.4" fill="${l.hair}"/><path d="M17 28q3 3 6 0" stroke="#5a1a22" stroke-width="1.4" fill="none"/></svg></button>`);
       b.addEventListener('click', () => {
         looks.querySelectorAll('button').forEach((x) => x.classList.remove('sel'));
         b.classList.add('sel');

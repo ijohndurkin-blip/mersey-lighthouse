@@ -84,88 +84,85 @@ export interface ExplorerLook {
   shirt: string;
 }
 
+// The Explorer is a friendly panda in a white explorer suit. `shirt` is the trim colour,
+// `skin` the suit and `hair` the dark fur (ears, eye patches, paws).
 export const EXPLORER_LOOKS: ExplorerLook[] = [
-  { skin: '#f6d2b4', hair: '#6a4026', shirt: '#2fb3a8' },
-  { skin: '#c98f66', hair: '#1f1a17', shirt: '#7a5cff' },
-  { skin: '#8a5a3c', hair: '#1a1412', shirt: '#ff7a3d' },
-  { skin: '#f3c9a2', hair: '#e2a040', shirt: '#3f8fe8' },
+  { skin: '#fffdf8', hair: '#1c1c22', shirt: '#24448a' },
+  { skin: '#fffdf8', hair: '#1c1c22', shirt: '#d6453f' },
+  { skin: '#fffdf8', hair: '#1c1c22', shirt: '#2f9a5a' },
+  { skin: '#fffdf8', hair: '#1c1c22', shirt: '#6a4fc0' },
 ];
 
 export function buildExplorer(scene: Scene, mats: Mats, look: ExplorerLook): RigNodes {
   const meshes: Mesh[] = [];
   const eyes: TransformNode[] = [];
+  const white = look.skin;
+  const fur = look.hair;
+  const trim = look.shirt;
   const root = node('explorer', scene, null);
-  const hips = node('hips', scene, root, 0, 0.66, 0);
+  const hips = node('hips', scene, root, 0, 0.52, 0);
   const torso = node('torso', scene, hips, 0, 0, 0);
   part(scene, mats, 'body', torso, (b) => {
-    b.add(Shape.rbox(0.5, 0.5, 0.34, 0.16, 3), T(0, 0.27, 0), look.shirt, { ao: 0.2 });
-    b.add(Shape.rbox(0.52, 0.08, 0.36, 0.04, 1), T(0, 0.04, 0), '#7a5034');
-    b.add(Shape.rbox(0.09, 0.07, 0.04, 0.02, 1), T(0, 0.04, 0.18), '#f2c14e');
-    // shorts
-    b.add(Shape.rbox(0.48, 0.18, 0.32, 0.1, 2), T(0, -0.04, 0), '#3a4f7a', { ao: 0.2 });
-    // shirt pocket + badge
-    b.add(Shape.rbox(0.12, 0.1, 0.03, 0.02, 1), T(-0.12, 0.33, 0.17), look.shirt, { mul: 0.85 });
-    b.add(Shape.cyl(0.02, 0.08, 0.08, 10), T(0.12, 0.36, 0.175, Math.PI / 2, 0, 0), '#ffd23f');
-    // backpack
-    b.add(Shape.rbox(0.42, 0.46, 0.22, 0.09, 2), T(0, 0.3, -0.27), '#ff8a3d', { ao: 0.25 });
-    b.add(Shape.rbox(0.36, 0.2, 0.06, 0.05, 1), T(0, 0.2, -0.39), '#ff9f5a');
-    b.add(Shape.rbox(0.44, 0.12, 0.24, 0.05, 1), T(0, 0.48, -0.27), '#e8742a');
-    b.add(Shape.cyl(0.5, 0.15, 0.15, 12), T(0, 0.6, -0.27, 0, 0, Math.PI / 2), '#4fa36a');
-    for (const sx of [-1, 1]) {
-      b.add(Shape.rbox(0.06, 0.4, 0.04, 0.02, 1), T(sx * 0.14, 0.3, 0.17), '#ffd23f');
-      b.add(Shape.rbox(0.06, 0.04, 0.4, 0.02, 1), T(sx * 0.14, 0.52, -0.02), '#ffd23f');
-    }
-    // scarf
-    b.add(Shape.torus(0.34, 0.08, 14), T(0, 0.52, 0.0), '#e8505b');
-    b.add(Shape.rbox(0.09, 0.22, 0.05, 0.03, 1), T(0.1, 0.42, 0.16, 0.2, 0, 0.2), '#e8505b');
+    // round suit body
+    b.add(Shape.ellipsoid(0.78, 0.86, 0.66, 20), T(0, 0.3, 0), white, { ao: 0.18 });
+    // chest name plate and two belly pockets
+    b.add(Shape.rbox(0.24, 0.1, 0.04, 0.02, 1), T(0, 0.5, 0.3, -0.25, 0, 0), white, { mul: 1.04, ao: 0.1 });
+    for (const sx of [-1, 1]) b.add(Shape.rbox(0.19, 0.2, 0.05, 0.02, 1), T(sx * 0.2, 0.2, 0.31, 0.05, sx * 0.35, 0), white, { mul: 0.97 });
+    // navy collar and shoulder straps
+    b.add(Shape.torus(0.4, 0.07, 18), T(0, 0.68, 0.0), trim);
+    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.22, 0.32, 0.4, 12), T(sx * 0.29, 0.56, 0), trim);
   }, meshes);
-  const head = node('head', scene, torso, 0, 0.55, 0.02);
-  const hc = 0.27;
+  const head = node('head', scene, torso, 0, 0.66, 0.02);
+  const hc = 0.4;
   part(scene, mats, 'head', head, (b) => {
-    b.add(Shape.sphere(0.58, 20), T(0, hc, 0, 0, 0, 0, 1, 0.96, 0.95), look.skin);
-    b.add(Shape.cyl(0.14, 0.16, 0.18, 10), T(0, 0.02, 0), look.skin);
-    for (const sx of [-1, 1]) b.add(Shape.ellipsoid(0.1, 0.13, 0.07, 8), T(sx * 0.285, hc - 0.01, -0.01), look.skin);
-    // hair
-    b.add(Shape.sphere(0.62, 16), T(0, hc + 0.05, -0.04, 0, 0, 0, 1, 0.9, 0.95), look.hair);
-    for (let i = 0; i < 5; i++) {
-      const a = -0.5 + i * 0.25;
-      b.add(Shape.sphere(0.17, 8), T(Math.sin(a) * 0.2, hc + 0.2, 0.19 + Math.cos(a) * 0.04), look.hair);
+    b.add(Shape.sphere(0.94, 24), T(0, hc, 0, 0, 0, 0, 1, 0.96, 0.9), white);
+    // ears
+    for (const sx of [-1, 1]) {
+      b.add(Shape.ellipsoid(0.32, 0.32, 0.16, 12), T(sx * 0.37, hc + 0.39, -0.05, 0, 0, sx * -0.35), fur);
+      b.add(Shape.ellipsoid(0.19, 0.19, 0.06, 10), T(sx * 0.37, hc + 0.39, 0.03, 0, 0, sx * -0.35), '#3a3a44');
     }
-    // explorer hat
-    b.add(Shape.lathe([[0.42, 0], [0.4, 0.03], [0.3, 0.06], [0.29, 0.2], [0.26, 0.24], [0, 0.26]], 22, false, false), T(0, hc + 0.2, -0.02, -0.08, 0, 0), '#e8c27a', { ao: 0.25 });
-    b.add(Shape.cyl(0.07, 0.6, 0.6, 22, false), T(0, hc + 0.29, -0.02, -0.08, 0, 0), '#c0473f');
+    // eye patches + brows
+    for (const sx of [-1, 1]) {
+      b.add(Shape.ellipsoid(0.27, 0.32, 0.12, 14), T(sx * 0.17, hc + 0.05, 0.36, 0.1, sx * 0.3, sx * 0.45), fur);
+      b.add(Shape.rbox(0.15, 0.04, 0.04, 0.02, 1), T(sx * 0.16, hc + 0.27, 0.37, -0.3, sx * 0.25, sx * -0.25), fur);
+    }
+    // muzzle, nose and big open smile
+    b.add(Shape.ellipsoid(0.46, 0.32, 0.26, 16), T(0, hc - 0.14, 0.3), white);
+    b.add(Shape.ellipsoid(0.15, 0.1, 0.09, 10), T(0, hc - 0.05, 0.44), fur);
+    b.add(Shape.ellipsoid(0.24, 0.15, 0.08, 12), T(0, hc - 0.21, 0.4), '#5a1a22');
+    b.add(Shape.ellipsoid(0.15, 0.07, 0.06, 10), T(0, hc - 0.25, 0.42), '#f08a96');
   }, meshes);
-  face(scene, mats, head, hc, { skin: look.skin, headR: 0.28, eyeSize: 1.0, eyeX: 0.105, brow: look.hair }, meshes, eyes);
-
-  const arm = (sx: number) => {
-    const sh = node('arm', scene, torso, sx * 0.3, 0.45, 0);
-    part(scene, mats, 'upper', sh, (b) => {
-      b.add(Shape.sphere(0.2, 10), T(0, 0, 0), look.shirt);
-      b.add(Shape.capsule(0.26, 0.068, 10), T(0, -0.11, 0), look.skin);
-      b.add(Shape.cyl(0.13, 0.17, 0.16, 10), T(0, -0.04, 0), look.shirt);
+  for (const sx of [-1, 1]) {
+    const eyeN = node('eye', scene, head, sx * 0.165, hc + 0.06, 0.41);
+    eyes.push(eyeN);
+    part(scene, mats, 'eyeW', eyeN, (b) => {
+      b.add(Shape.ellipsoid(0.15, 0.17, 0.06, 12), T(0, 0, 0), '#ffffff');
+      b.add(Shape.ellipsoid(0.1, 0.11, 0.04, 10), T(sx * -0.012, -0.01, 0.025), '#5a3418');
+      b.add(Shape.ellipsoid(0.055, 0.06, 0.03, 8), T(sx * -0.012, -0.01, 0.04), '#120c0a');
     }, meshes);
-    const fore = node('fore', scene, sh, 0, -0.22, 0);
+    sparkle(scene, mats, eyeN, sx * -0.03 + 0.012, 0.025, 0.055, 0.032, meshes);
+  }
+  const arm = (sx: number) => {
+    const sh = node('arm', scene, torso, sx * 0.4, 0.5, 0);
+    part(scene, mats, 'upper', sh, (b) => b.add(Shape.capsule(0.32, 0.12, 12), T(sx * 0.02, -0.12, 0), white), meshes);
+    const fore = node('fore', scene, sh, sx * 0.02, -0.26, 0);
     part(scene, mats, 'fore', fore, (b) => {
-      b.add(Shape.capsule(0.22, 0.06, 10), T(0, -0.08, 0), look.skin);
-      b.add(Shape.sphere(0.16, 10), T(0, -0.21, 0.01, 0, 0, 0, 1, 1.1, 0.9), look.skin);
-      b.add(Shape.torus(0.13, 0.03, 10), T(0, -0.14, 0), '#ffd23f');
+      b.add(Shape.capsule(0.26, 0.11, 12), T(0, -0.07, 0), white);
+      b.add(Shape.torus(0.23, 0.05, 14), T(0, -0.17, 0), trim);
+      b.add(Shape.ellipsoid(0.22, 0.24, 0.2, 12), T(0, -0.29, 0.01), fur);
     }, meshes);
     return { sh, fore };
   };
   const L = arm(-1);
   const R = arm(1);
   const leg = (sx: number) => {
-    const th = node('leg', scene, hips, sx * 0.12, -0.04, 0);
-    part(scene, mats, 'thigh', th, (b) => {
-      b.add(Shape.capsule(0.32, 0.075, 10), T(0, -0.15, 0), look.skin);
-      b.add(Shape.cyl(0.14, 0.2, 0.18, 10), T(0, -0.04, 0), '#3a4f7a');
-    }, meshes);
-    const sh = node('shin', scene, th, 0, -0.3, 0);
+    const th = node('leg', scene, hips, sx * 0.17, -0.02, 0);
+    part(scene, mats, 'thigh', th, (b) => b.add(Shape.capsule(0.3, 0.14, 12), T(0, -0.1, 0), white), meshes);
+    const sh = node('shin', scene, th, 0, -0.22, 0);
     part(scene, mats, 'shin', sh, (b) => {
-      b.add(Shape.capsule(0.3, 0.068, 10), T(0, -0.13, 0), look.skin);
-      b.add(Shape.cyl(0.1, 0.15, 0.15, 10), T(0, -0.22, 0), '#ffffff');
-      b.add(Shape.rbox(0.18, 0.14, 0.3, 0.07, 2), T(0, -0.3, 0.05), '#e8505b', { ao: 0.2 });
-      b.add(Shape.rbox(0.19, 0.04, 0.31, 0.02, 1), T(0, -0.36, 0.05), '#ffffff');
+      b.add(Shape.capsule(0.22, 0.13, 12), T(0, -0.06, 0), white);
+      b.add(Shape.torus(0.3, 0.06, 16), T(0, -0.13, 0), trim);
+      b.add(Shape.rbox(0.28, 0.16, 0.36, 0.08, 2), T(0, -0.2, 0.05), white, { ao: 0.2 });
     }, meshes);
     return { th, sh };
   };
