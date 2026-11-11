@@ -87,18 +87,18 @@ function sculpt(detail: number): PandaGeo {
   const skull = blend(0.15, cran, jowl);
   const muzzle = ell(0, 0.165, 0.228, 0.2, 0.158, 0.14);
   const face = blend(0.08, skull, muzzle);
-  const cavity = ell(0, 0.185, 0.375, 0.152, 0.118, 0.1);
+  const cavity = ell(0, 0.188, 0.375, 0.162, 0.128, 0.1);
   // puffy upper lip: two lobes hanging under the nose
   const lipLobes = mirrorX(ell(0.048, 0.238, 0.325, 0.09, 0.062, 0.052));
   // smiling cheeks at the corners of the mouth
-  const cheeks = mirrorX(ell(0.168, 0.215, 0.27, 0.06, 0.065, 0.06));
+  const cheeks = mirrorX(ell(0.18, 0.218, 0.265, 0.06, 0.065, 0.06));
   // thick lower lip following the bottom of the mouth
   const lipPts: [number, number][] = [
-    [0.158, 0.232],
-    [0.153, 0.17],
-    [0.125, 0.11],
-    [0.07, 0.07],
-    [0, 0.056],
+    [0.168, 0.236],
+    [0.163, 0.17],
+    [0.134, 0.105],
+    [0.075, 0.06],
+    [0, 0.046],
   ];
   const lipZ = (x: number, y: number) => surfaceAlong(face, x, y, 0, 0, 0, 1) - 0.01;
   const lipCones: SDF[] = [];
@@ -116,21 +116,21 @@ function sculpt(detail: number): PandaGeo {
   const mouthIn = clip(inflate(face, -0.04), inflate(cavity, 0.004), 0.004);
   const tongueZ = surfaceAlong(face, 0, 0.1, 0, 0, 0, 1) - 0.062;
   const tongue = carve(
-    clip(ell(0, 0.098, tongueZ, 0.098, 0.046, 0.042), inflate(cavity, -0.003), 0.008),
+    clip(ell(0, 0.088, tongueZ, 0.092, 0.04, 0.042), inflate(cavity, -0.003), 0.008),
     cone(0, 0.14, tongueZ + 0.045, 0, 0.07, tongueZ + 0.043, 0.005, 0.004),
     0.004,
   );
   const teethZ = surfaceAlong(face, 0, 0.17, 0, 0, 0, 1) - 0.046;
-  const teeth = clip(ell(0, 0.186, teethZ, 0.085, 0.02, 0.02), inflate(cavity, -0.002), 0.004);
+  const teeth = clip(ell(0, 0.194, teethZ, 0.08, 0.018, 0.02), inflate(cavity, -0.002), 0.004);
 
   // nose: a wide rounded bean
   const noseZ = surfaceAlong(headWhite, 0, 0.318, 0, 0, 0, 1);
-  const nose = blend(0.03, ell(0, 0.332, noseZ - 0.016, 0.076, 0.046, 0.056), ell(0, 0.305, noseZ - 0.006, 0.06, 0.042, 0.052));
+  const nose = blend(0.03, ell(0, 0.33, noseZ - 0.016, 0.088, 0.054, 0.06), ell(0, 0.3, noseZ - 0.006, 0.068, 0.046, 0.056));
   // philtrum line from the nose down to the lip
   const philtrum = emboss(headWhite, 0.0022, prism(stroke2([[0, 0.272, 0.0034], [0, 0.2, 0.003]]), 0, 0.1), 0.002, 0.006);
 
   // embossed eye patches and brows
-  const patchShape = blend2(0.06, circle2(0.128, 0.4, 0.092), circle2(0.215, 0.3, 0.088));
+  const patchShape = blend2(0.07, circle2(0.136, 0.396, 0.106), circle2(0.228, 0.298, 0.098));
   const patches = mirrorX(emboss(face, 0.005, prism(patchShape, 0, 0.02), 0.006));
   const browShape = stroke2([
     [0.056, 0.52, 0.01],
@@ -175,8 +175,8 @@ function sculpt(detail: number): PandaGeo {
 
   // =========================================================================== BODY
   // (origin at the hips)
-  const belly = ell(0, 0.215, 0.015, 0.345, 0.3, 0.31);
-  const chest = ell(0, 0.44, 0, 0.3, 0.25, 0.25);
+  const belly = ell(0, 0.2, 0.02, 0.378, 0.3, 0.335);
+  const chest = ell(0, 0.44, 0, 0.285, 0.25, 0.25);
   // rounded shoulders so the arms grow out of the body instead of sticking onto it
   const shoulders = mirrorX(ell(0.262, 0.545, 0, 0.115, 0.105, 0.125));
   const body = blend(0.1, blend(0.16, belly, chest), shoulders);
@@ -326,7 +326,7 @@ export function buildPanda(scene: Scene, mats: Mats, trim: string, detail = 1): 
     eyeN.rotation.set(e.pitch, e.yaw, 0);
     eyes.push(eyeN);
     const b = new Batch();
-    b.add(Shape.ellipsoid(0.142, 0.148, 0.04, 32), T(0, 0, 0.0), '#ffffff');
+    b.add(Shape.ellipsoid(0.134, 0.14, 0.04, 32), T(0, 0, 0.0), '#ffffff');
     b.add(Shape.ellipsoid(0.098, 0.098, 0.03, 28), T(-sx * 0.007, -0.004, 0.012), '#7a4420', { top: '#3a1c0a' });
     b.add(Shape.ellipsoid(0.052, 0.052, 0.02, 20), T(-sx * 0.007, -0.004, 0.022), '#0d0907');
     const m = b.build('pandaEye', scene, mats.toy, eyeN);
