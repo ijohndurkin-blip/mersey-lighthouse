@@ -65,9 +65,9 @@ interface PandaGeo {
 // rig layout (metres; the whole panda is ~1.6 tall)
 const HIP_Y = 0.34;
 const NECK_Y = 0.6; // in torso space
-const SHOULDER = { x: 0.355, y: 0.52 };
-const ARM_TILT = 0.29;
-const ARM_LEN = 0.268;
+const SHOULDER = { x: 0.335, y: 0.548 };
+const ARM_TILT = 0.19;
+const ARM_LEN = 0.292;
 const LEG_X = 0.18;
 const KNEE_Y = -0.124;
 
@@ -177,12 +177,14 @@ function sculpt(detail: number): PandaGeo {
   // (origin at the hips)
   const belly = ell(0, 0.215, 0.015, 0.345, 0.3, 0.31);
   const chest = ell(0, 0.44, 0, 0.3, 0.25, 0.25);
-  const body = blend(0.16, belly, chest);
+  // rounded shoulders so the arms grow out of the body instead of sticking onto it
+  const shoulders = mirrorX(ell(0.262, 0.545, 0, 0.115, 0.105, 0.125));
+  const body = blend(0.1, blend(0.16, belly, chest), shoulders);
   // vest armholes: navy panels around each shoulder
   const armhole = (x: number, y: number, z: number) => {
-    const u = (x - 0.4) / 0.245;
-    const v = (y - 0.55) / 0.215;
-    const w = z / 0.27;
+    const u = (x - 0.365) / 0.185;
+    const v = (y - 0.58) / 0.2;
+    const w = z / 0.26;
     return (Math.sqrt(u * u + v * v + w * w) - 1) * 0.2;
   };
   const straps = mirrorX(emboss(body, 0.012, armhole, 0.008));
@@ -207,7 +209,7 @@ function sculpt(detail: number): PandaGeo {
   const armFor = (sx: number): [Piece[], Piece[]] => {
     const dx = sx * Math.sin(ARM_TILT);
     const dy = -Math.cos(ARM_TILT);
-    const arm = cone(0, 0, 0, dx * (ARM_LEN + 0.01), dy * (ARM_LEN + 0.01), 0, 0.088, 0.08);
+    const arm = cone(0, 0, 0, dx * (ARM_LEN + 0.01), dy * (ARM_LEN + 0.01), 0, 0.096, 0.082);
     const armAO = union(arm, move(body, -sx * SHOULDER.x, -SHOULDER.y, 0));
     // hand modelled hanging straight down from the wrist, then tilted with the arm
     const fist = ell(0, -0.115, 0.004, 0.086, 0.098, 0.074);
