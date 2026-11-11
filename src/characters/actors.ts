@@ -35,7 +35,7 @@ export class Player {
   private coyote = 0;
   carry: TransformNode | null = null;
 
-  constructor(public nodes: RigNodes, private col: Collision, shadow: ShadowGenerator) {
+  constructor(public nodes: RigNodes & { fill?: { direction: Vector3 } }, private col: Collision, shadow: ShadowGenerator) {
     this.rig = new Rig(nodes);
     this.rig.stride = 0.85;
     this.rig.foreScale = 0.3;

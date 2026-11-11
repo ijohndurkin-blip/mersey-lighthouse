@@ -7,6 +7,10 @@ import './ui/styles.css';
 import { Game } from './game/game';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
+if (new URL(location.href).searchParams.has('viewer')) {
+  // developer-only character viewer
+  import('./dev/viewer').then((m) => m.runViewer(canvas));
+} else {
 const game = new Game(canvas, document.getElementById('ui') as HTMLDivElement);
 (window as any).__game = game;
 game.boot().catch((e) => {
@@ -16,3 +20,4 @@ game.boot().catch((e) => {
   el.textContent = 'Oh no! The game could not start on this device. Please try a different browser.';
   document.body.appendChild(el);
 });
+}

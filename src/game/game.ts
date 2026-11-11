@@ -192,7 +192,7 @@ export class Game {
   private buildCharacters() {
     const { scene, world } = this;
     const sh = world.env.shadow;
-    const ex = buildExplorer(scene, world.mats, EXPLORER_LOOKS[this.look]);
+    const ex = buildExplorer(scene, world.mats, EXPLORER_LOOKS[this.look], this.pandaDetail());
     this.player = new Player(ex, world.col, sh);
     this.player.teleport(PLAYER_START.x, PLAYER_START.z, 0);
     this.player.onStep = (s, run) => this.audio.step(s, run);
@@ -212,12 +212,16 @@ export class Game {
     world.col.addCircle({ x: 0, z: 0, r: 0.6, enabled: () => false });
   }
 
+  private pandaDetail() {
+    return this.quality === 'high' ? 1 : this.quality === 'medium' ? 1.15 : 1.4;
+  }
+
   private rebuildPlayer() {
     const pos = this.player.pos.clone();
     const yaw = this.player.yaw;
     for (const m of this.player.nodes.meshes) m.dispose();
     this.player.nodes.root.dispose();
-    const ex = buildExplorer(this.scene, this.world.mats, EXPLORER_LOOKS[this.look]);
+    const ex = buildExplorer(this.scene, this.world.mats, EXPLORER_LOOKS[this.look], this.pandaDetail());
     const old = this.player;
     this.player = new Player(ex, this.world.col, this.world.env.shadow);
     this.player.onStep = old.onStep;
@@ -1161,6 +1165,8 @@ export class Game {
     // ---------------- camera
     const focus = this.player.pos.add(new Vector3(0, 1.4, 0));
     if (this.mode !== 'title') this.cam.update(dt, focus, this.mode === 'play' ? look : { dx: 0, dy: 0, zoom: 0 }, this.player.speed / 7.8, this.player.yaw);
+    // the hero's soft fill light always comes from the camera side
+    this.player.nodes.fill?.direction.copyFrom(this.cam.cam.getDirection(Vector3.Forward()));
     this.updateMarker();
     this.updateAudio(dt);
     this.adaptPerformance(dt);
